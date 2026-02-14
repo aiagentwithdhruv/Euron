@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Euri API Tester</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e4e4e7; min-height: 100vh; }
+
+    .header { background: linear-gradient(135deg, #1a1b2e, #2d1b4e); padding: 20px 32px; border-bottom: 1px solid #27272a; display: flex; align-items: center; justify-content: space-between; }
+    .header h1 { font-size: 22px; font-weight: 700; }
+    .header h1 span { color: #a78bfa; }
+    .badge { background: #22c55e20; color: #22c55e; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+
+    .api-bar { background: #18181b; padding: 16px 32px; border-bottom: 1px solid #27272a; display: flex; gap: 12px; align-items: center; }
+    .api-bar label { font-size: 13px; color: #a1a1aa; white-space: nowrap; }
+    .api-key-wrap { flex: 1; position: relative; display: flex; align-items: center; }
+    .api-key-wrap input { width: 100%; background: #27272a; border: 1px solid #3f3f46; color: #e4e4e7; padding: 10px 44px 10px 14px; border-radius: 8px; font-size: 14px; font-family: monospace; }
+    .api-key-wrap input:focus { outline: none; border-color: #a78bfa; }
+    .api-key-toggle { position: absolute; right: 8px; background: none; border: none; color: #71717a; cursor: pointer; font-size: 18px; padding: 4px 8px; border-radius: 4px; }
+    .api-key-toggle:hover { color: #a1a1aa; background: #3f3f46; }
+    .token-info { font-size: 12px; color: #71717a; white-space: nowrap; }
+
+    .container { display: grid; grid-template-columns: 1fr 1fr; gap: 0; min-height: calc(100vh - 120px); }
+
+    .panel { border-right: 1px solid #27272a; display: flex; flex-direction: column; }
+    .panel:last-child { border-right: none; }
+    .panel-header { padding: 16px 24px; border-bottom: 1px solid #27272a; display: flex; align-items: center; gap: 10px; }
+    .panel-header h2 { font-size: 16px; font-weight: 600; }
+    .panel-icon { font-size: 20px; }
+    .panel-body { padding: 20px 24px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 12px; font-weight: 600; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px; }
+    select, input[type="text"], input[type="number"], textarea {
+      background: #27272a; border: 1px solid #3f3f46; color: #e4e4e7; padding: 10px 14px;
+      border-radius: 8px; font-size: 14px; font-family: inherit; resize: none;
+    }
+    select:focus, input:focus, textarea:focus { outline: none; border-color: #a78bfa; }
+    textarea { min-height: 100px; }
+
+    .row { display: flex; gap: 12px; }
+    .row .field { flex: 1; }
+
+    .btn {
+      padding: 12px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-primary { background: #7c3aed; color: white; }
+    .btn-primary:hover { background: #6d28d9; }
+    .btn-primary:disabled { background: #3f3f46; color: #71717a; cursor: not-allowed; }
+    .btn-secondary { background: #27272a; color: #e4e4e7; border: 1px solid #3f3f46; }
+    .btn-secondary:hover { background: #3f3f46; }
+
+    .response-box {
+      background: #1a1b23; border: 1px solid #27272a; border-radius: 10px; padding: 16px;
+      font-size: 14px; line-height: 1.7; white-space: pre-wrap; word-wrap: break-word;
+      min-height: 150px; max-height: 400px; overflow-y: auto; flex: 1;
+    }
+    .response-box.empty { color: #52525b; font-style: italic; display: flex; align-items: center; justify-content: center; }
+    .response-box .error { color: #f87171; }
+    .response-box .meta { color: #71717a; font-size: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #27272a; }
+
+    .image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    .image-grid img { width: 100%; border-radius: 8px; border: 1px solid #27272a; cursor: pointer; transition: transform 0.2s; }
+    .image-grid img:hover { transform: scale(1.02); }
+
+    .prompt-tips { background: #1a1b2e; border: 1px solid #7c3aed30; border-radius: 8px; padding: 12px 16px; }
+    .prompt-tips summary { font-size: 12px; font-weight: 600; color: #a78bfa; cursor: pointer; user-select: none; }
+    .prompt-tips summary:hover { color: #c4b5fd; }
+    .prompt-tips .tips-body { margin-top: 10px; font-size: 12px; color: #a1a1aa; line-height: 1.8; }
+    .prompt-tips .tip-tag { display: inline-block; background: #27272a; color: #d4d4d8; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin: 2px 3px; cursor: pointer; transition: all 0.15s; }
+    .prompt-tips .tip-tag:hover { background: #7c3aed40; color: #c4b5fd; }
+
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #52525b; border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .tabs { display: flex; gap: 0; border-bottom: 1px solid #27272a; }
+    .tab { padding: 12px 24px; font-size: 14px; font-weight: 500; color: #71717a; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+    .tab:hover { color: #a1a1aa; }
+    .tab.active { color: #a78bfa; border-bottom-color: #a78bfa; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: flex; flex-direction: column; }
+
+    .history { display: flex; flex-direction: column; gap: 12px; }
+    .msg { padding: 12px 16px; border-radius: 10px; font-size: 14px; line-height: 1.6; max-width: 85%; }
+    .msg.user { background: #7c3aed30; border: 1px solid #7c3aed40; align-self: flex-end; }
+    .msg.assistant { background: #27272a; border: 1px solid #3f3f46; align-self: flex-start; white-space: pre-wrap; }
+    .msg .role { font-size: 11px; font-weight: 600; color: #71717a; margin-bottom: 4px; text-transform: uppercase; }
+
+    @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>euri</span> API Tester</h1>
+  <span class="badge">200K tokens/day FREE</span>
+</div>
+
+<div class="api-bar">
+  <label>API Key:</label>
+  <div class="api-key-wrap">
+    <input type="password" id="apiKey" placeholder="Enter your Euri API key..." />
+    <button class="api-key-toggle" id="apiKeyToggle" title="Show/hide key">&#128065;</button>
+  </div>
+  <span class="token-info" id="tokenInfo">Tokens used: ---</span>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="chat">Chat</div>
+  <div class="tab" data-tab="image">Image Generation</div>
+  <div class="tab" data-tab="embed">Embeddings</div>
+</div>
+
+<!-- ═══ CHAT TAB ═══ -->
+<div class="tab-content active" id="tab-chat">
+  <div class="container">
+    <div class="panel">
+      <div class="panel-header"><span class="panel-icon">💬</span><h2>Chat Completion</h2></div>
+      <div class="panel-body">
+        <div class="field">
+          <label>Model</label>
+          <select id="chatModel">
+            <optgroup label="Google">
+              <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Fast, Low cost)</option>
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro (Smart, 2M context)</option>
+              <option value="gemini-2.0-flash">Gemini 2.0 Flash (Very fast)</option>
+              <option value="gemini-2.5-flash-lite-preview-06-17">Gemini 2.5 Flash Lite (Ultra-fast)</option>
+              <option value="gemini-2.5-pro-preview-06-05">Gemini 2.5 Pro Preview</option>
+              <option value="gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash Preview</option>
+            </optgroup>
+            <optgroup label="OpenAI">
+              <option value="gpt-5-nano-2025-08-07">GPT-5 Nano (Ultra-fast)</option>
+              <option value="gpt-5-mini-2025-08-07">GPT-5 Mini (Fast)</option>
+              <option value="gpt-4.1-nano">GPT-4.1 Nano (Ultra-fast)</option>
+              <option value="gpt-4.1-mini">GPT-4.1 Mini (Fast)</option>
+              <option value="openai/gpt-oss-20b">GPT-OSS 20B</option>
+              <option value="openai/gpt-oss-120b">GPT-OSS 120B (Most powerful)</option>
+            </optgroup>
+            <optgroup label="Meta">
+              <option value="llama-4-scout-17b-16e-instruct">Llama 4 Scout</option>
+              <option value="llama-4-maverick-17b-128e-instruct">Llama 4 Maverick</option>
+              <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
+              <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant</option>
+            </optgroup>
+            <optgroup label="Groq">
+              <option value="groq/compound">Groq Compound (Web Search)</option>
+              <option value="groq/compound-mini">Groq Compound Mini (Web Search)</option>
+            </optgroup>
+            <optgroup label="Alibaba">
+              <option value="qwen/qwen3-32b">Qwen 3 32B</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="field">
+          <label>System Prompt (optional)</label>
+          <input type="text" id="systemPrompt" placeholder="e.g. You are a helpful coding assistant..." />
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Temperature</label>
+            <input type="number" id="chatTemp" value="0.7" min="0" max="2" step="0.1" />
+          </div>
+          <div class="field">
+            <label>Max Tokens</label>
+            <input type="number" id="chatMaxTokens" value="1000" min="1" max="16000" step="100" />
+          </div>
+        </div>
+        <div class="field" style="flex:1;">
+          <label>Message</label>
+          <textarea id="chatInput" placeholder="Type your message..." style="flex:1;">What is artificial intelligence? Explain in 3 sentences.</textarea>
+        </div>
+        <div class="row">
+          <button class="btn btn-primary" id="chatSend" style="flex:1;">Send Message</button>
+          <button class="btn btn-secondary" id="chatClear">Clear</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-icon">📨</span><h2>Response</h2></div>
+      <div class="panel-body">
+        <div class="history" id="chatHistory"></div>
+        <div class="response-box empty" id="chatResponse">Response will appear here...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ IMAGE TAB ═══ -->
+<div class="tab-content" id="tab-image">
+  <div class="container">
+    <div class="panel">
+      <div class="panel-header"><span class="panel-icon">🎨</span><h2>Image Generation</h2></div>
+      <div class="panel-body">
+        <div class="field">
+          <label>Model</label>
+          <select id="imgModel">
+            <option value="gemini-3-pro-image-preview">Gemini 3 Pro Image Preview</option>
+          </select>
+        </div>
+
+        <details class="prompt-tips" open>
+          <summary>Prompt Tips - Best Practices for Gemini Image Gen</summary>
+          <div class="tips-body">
+            <strong>Structure:</strong> [Subject] + [Style] + [Details] + [Quality] + [Negative]<br><br>
+            <strong>Styles (click to add):</strong><br>
+            <span class="tip-tag" data-tip="photorealistic, 8K, ultra-detailed">Photorealistic</span>
+            <span class="tip-tag" data-tip="digital art, vibrant colors, highly detailed">Digital Art</span>
+            <span class="tip-tag" data-tip="oil painting style, textured brushstrokes">Oil Painting</span>
+            <span class="tip-tag" data-tip="minimalist flat design, clean lines">Minimalist</span>
+            <span class="tip-tag" data-tip="cyberpunk aesthetic, neon glow, dark atmosphere">Cyberpunk</span>
+            <span class="tip-tag" data-tip="3D render, cinema 4D, octane render">3D Render</span>
+            <span class="tip-tag" data-tip="watercolor illustration, soft edges">Watercolor</span>
+            <span class="tip-tag" data-tip="anime style, cel shading, manga aesthetic">Anime</span>
+            <br><br>
+            <strong>Quality boosters (click to add):</strong><br>
+            <span class="tip-tag" data-tip="ultra-detailed, premium quality">Ultra-detailed</span>
+            <span class="tip-tag" data-tip="professional lighting, studio quality">Pro lighting</span>
+            <span class="tip-tag" data-tip="no watermark, no text, no logo">No watermark</span>
+            <span class="tip-tag" data-tip="readable on mobile, high contrast">Mobile-ready</span>
+            <span class="tip-tag" data-tip="cinematic composition, rule of thirds">Cinematic</span>
+            <span class="tip-tag" data-tip="bold typography, modern design">Bold text</span>
+            <br><br>
+            <strong>Example prompt:</strong><br>
+            <em style="color:#71717a">"A bearded tech entrepreneur giving a keynote presentation, cyberpunk stage with holographic displays, cinematic lighting, photorealistic, 8K, no watermark"</em>
+          </div>
+        </details>
+
+        <div class="field">
+          <label>Prompt</label>
+          <textarea id="imgPrompt" placeholder="Describe the image you want to generate..." style="min-height:120px;">A futuristic city skyline at sunset, cyberpunk style, neon lights reflecting on wet streets</textarea>
+        </div>
+        <div class="field">
+          <label>Number of Images</label>
+          <input type="number" id="imgCount" value="1" min="1" max="4" />
+        </div>
+        <button class="btn btn-primary" id="imgGenerate">Generate Images</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-icon">🖼️</span><h2>Generated Images</h2></div>
+      <div class="panel-body">
+        <div class="image-grid" id="imageResults"></div>
+        <div class="response-box empty" id="imgResponse">Generated images will appear here...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EMBEDDINGS TAB ═══ -->
+<div class="tab-content" id="tab-embed">
+  <div class="container">
+    <div class="panel">
+      <div class="panel-header"><span class="panel-icon">🔢</span><h2>Embeddings</h2></div>
+      <div class="panel-body">
+        <div class="field">
+          <label>Model</label>
+          <select id="embedModel">
+            <option value="gemini-embedding-001">Gemini Embedding 001</option>
+            <option value="text-embedding-3-small">Text Embedding 3 Small (OpenAI)</option>
+            <option value="togethercomputer/m2-bert-80M-32k-retrieval">M2 BERT 80M 32K (Together)</option>
+          </select>
+        </div>
+        <div class="field" style="flex:1;">
+          <label>Text to Embed</label>
+          <textarea id="embedInput" placeholder="Enter text to generate embeddings..." style="flex:1;">The food was delicious and the service was excellent.</textarea>
+        </div>
+        <button class="btn btn-primary" id="embedGenerate">Generate Embedding</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-icon">📊</span><h2>Embedding Result</h2></div>
+      <div class="panel-body">
+        <div class="response-box empty" id="embedResponse" style="flex:1;">Embedding vector will appear here...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE = "https://api.euron.one/api/v1/euri";
+let totalTokensUsed = 0;
+let chatMessages = [];
+
+// ── Tabs ──────────────────────────────────────────────────────────
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById("tab-" + tab.dataset.tab).classList.add("active");
+  });
+});
+
+// ── Helpers ───────────────────────────────────────────────────────
+function getKey() {
+  const k = document.getElementById("apiKey").value.trim();
+  if (!k) { alert("Please enter your Euri API key first!"); return null; }
+  return k;
+}
+
+function updateTokens(usage) {
+  if (usage?.total_tokens) {
+    totalTokensUsed += usage.total_tokens;
+    const remaining = Math.max(0, 200000 - totalTokensUsed);
+    const pct = ((totalTokensUsed / 200000) * 100).toFixed(1);
+    const color = remaining < 20000 ? "#f87171" : remaining < 50000 ? "#fbbf24" : "#22c55e";
+    document.getElementById("tokenInfo").innerHTML = `<span style="color:${color}">${remaining.toLocaleString()}</span> tokens remaining (${pct}% used)`;
+  }
+}
+
+function extractContent(content) {
+  if (!content) return "";
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) return content.filter(p => p.type === "text").map(p => p.text).join("");
+  return JSON.stringify(content);
+}
+
+function setLoading(btn, loading) {
+  if (loading) {
+    btn.disabled = true;
+    btn._text = btn.textContent;
+    btn.innerHTML = '<div class="spinner"></div> Processing...';
+  } else {
+    btn.disabled = false;
+    btn.textContent = btn._text;
+  }
+}
+
+// ── Chat ──────────────────────────────────────────────────────────
+const chatSend = document.getElementById("chatSend");
+const chatClear = document.getElementById("chatClear");
+const chatHistory = document.getElementById("chatHistory");
+const chatResponse = document.getElementById("chatResponse");
+
+chatSend.addEventListener("click", async () => {
+  const key = getKey(); if (!key) return;
+  const model = document.getElementById("chatModel").value;
+  const systemPrompt = document.getElementById("systemPrompt").value.trim();
+  const userMsg = document.getElementById("chatInput").value.trim();
+  const temp = parseFloat(document.getElementById("chatTemp").value);
+  const maxTokens = parseInt(document.getElementById("chatMaxTokens").value);
+
+  if (!userMsg) { alert("Enter a message!"); return; }
+
+  // Build messages
+  if (chatMessages.length === 0 && systemPrompt) {
+    chatMessages.push({ role: "system", content: systemPrompt });
+  }
+  chatMessages.push({ role: "user", content: userMsg });
+
+  // Show user msg in history
+  addToHistory("user", userMsg);
+  document.getElementById("chatInput").value = "";
+  chatResponse.className = "response-box empty";
+  chatResponse.innerHTML = '<div class="spinner"></div> Generating...';
+
+  setLoading(chatSend, true);
+
+  try {
+    const start = Date.now();
+    const res = await fetch(BASE + "/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+      body: JSON.stringify({ model, messages: chatMessages, temperature: temp, max_tokens: maxTokens })
+    });
+    const elapsed = ((Date.now() - start) / 1000).toFixed(2);
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error?.message || data.detail || JSON.stringify(data));
+
+    const content = extractContent(data.choices?.[0]?.message?.content);
+    chatMessages.push({ role: "assistant", content });
+
+    addToHistory("assistant", content);
+    updateTokens(data.usage);
+
+    chatResponse.className = "response-box";
+    chatResponse.innerHTML = "";
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.textContent = `Model: ${data.model || model} | Tokens: ${data.usage?.total_tokens || "?"} (prompt: ${data.usage?.prompt_tokens || "?"}, completion: ${data.usage?.completion_tokens || "?"}) | Time: ${elapsed}s`;
+    chatResponse.appendChild(meta);
+  } catch (err) {
+    chatResponse.className = "response-box";
+    chatResponse.innerHTML = `<span class="error">Error: ${err.message}</span>`;
+  }
+  setLoading(chatSend, false);
+});
+
+chatClear.addEventListener("click", () => {
+  chatMessages = [];
+  chatHistory.innerHTML = "";
+  chatResponse.className = "response-box empty";
+  chatResponse.innerHTML = "Response will appear here...";
+});
+
+function addToHistory(role, content) {
+  const div = document.createElement("div");
+  div.className = "msg " + role;
+  div.innerHTML = `<div class="role">${role}</div>${escapeHtml(content)}`;
+  chatHistory.appendChild(div);
+  chatHistory.scrollTop = chatHistory.scrollHeight;
+  chatResponse.className = "response-box empty";
+}
+
+// ── Image Generation ──────────────────────────────────────────────
+const imgBtn = document.getElementById("imgGenerate");
+
+imgBtn.addEventListener("click", async () => {
+  const key = getKey(); if (!key) return;
+  const model = document.getElementById("imgModel").value;
+  const prompt = document.getElementById("imgPrompt").value.trim();
+  const n = parseInt(document.getElementById("imgCount").value);
+
+  if (!prompt) { alert("Enter a prompt!"); return; }
+
+  const imgResults = document.getElementById("imageResults");
+  const imgResponse = document.getElementById("imgResponse");
+  imgResults.innerHTML = "";
+  imgResponse.className = "response-box empty";
+  imgResponse.innerHTML = '<div class="spinner"></div> Generating images...';
+
+  setLoading(imgBtn, true);
+
+  try {
+    const start = Date.now();
+    const res = await fetch(BASE + "/images/generations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+      body: JSON.stringify({ model, prompt, n })
+    });
+    const elapsed = ((Date.now() - start) / 1000).toFixed(2);
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error?.message || data.detail || JSON.stringify(data));
+
+    if (data.data && data.data.length > 0) {
+      data.data.forEach((img, i) => {
+        if (img.url) {
+          const imgEl = document.createElement("img");
+          imgEl.src = img.url;
+          imgEl.alt = `Generated image ${i + 1}`;
+          imgEl.title = "Click to open full size";
+          imgEl.addEventListener("click", () => window.open(img.url, "_blank"));
+          imgResults.appendChild(imgEl);
+        } else if (img.b64_json) {
+          const imgEl = document.createElement("img");
+          imgEl.src = "data:image/png;base64," + img.b64_json;
+          imgEl.alt = `Generated image ${i + 1}`;
+          imgResults.appendChild(imgEl);
+        }
+      });
+      imgResponse.className = "response-box";
+      imgResponse.innerHTML = "";
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = `Generated ${data.data.length} image(s) | Model: ${model} | Time: ${elapsed}s`;
+      imgResponse.appendChild(meta);
+    } else {
+      imgResponse.innerHTML = '<span class="error">No images returned</span>';
+      imgResponse.className = "response-box";
+    }
+  } catch (err) {
+    imgResponse.className = "response-box";
+    imgResponse.innerHTML = `<span class="error">Error: ${err.message}</span>`;
+  }
+  setLoading(imgBtn, false);
+});
+
+// ── Embeddings ────────────────────────────────────────────────────
+const embedBtn = document.getElementById("embedGenerate");
+
+embedBtn.addEventListener("click", async () => {
+  const key = getKey(); if (!key) return;
+  const model = document.getElementById("embedModel").value;
+  const input = document.getElementById("embedInput").value.trim();
+
+  if (!input) { alert("Enter text!"); return; }
+
+  const embedResponse = document.getElementById("embedResponse");
+  embedResponse.className = "response-box empty";
+  embedResponse.innerHTML = '<div class="spinner"></div> Generating embeddings...';
+
+  setLoading(embedBtn, true);
+
+  try {
+    const start = Date.now();
+    const res = await fetch(BASE + "/embeddings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+      body: JSON.stringify({ model, input })
+    });
+    const elapsed = ((Date.now() - start) / 1000).toFixed(2);
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error?.message || data.detail || JSON.stringify(data));
+
+    const embedding = data.data?.[0]?.embedding;
+    if (embedding) {
+      const dims = embedding.length;
+      const preview = embedding.slice(0, 20).map(v => v.toFixed(6)).join(", ");
+      embedResponse.className = "response-box";
+      embedResponse.innerHTML =
+        `<strong>Dimensions:</strong> ${dims}\n\n` +
+        `<strong>First 20 values:</strong>\n[${preview}, ...]\n\n` +
+        `<strong>Min:</strong> ${Math.min(...embedding).toFixed(6)}\n` +
+        `<strong>Max:</strong> ${Math.max(...embedding).toFixed(6)}\n` +
+        `<strong>Mean:</strong> ${(embedding.reduce((a, b) => a + b, 0) / dims).toFixed(6)}` +
+        `<div class="meta">Model: ${data.model || model} | Tokens: ${data.usage?.total_tokens || "?"} | Time: ${elapsed}s</div>`;
+      updateTokens(data.usage);
+    } else {
+      embedResponse.innerHTML = '<span class="error">No embedding returned</span>';
+      embedResponse.className = "response-box";
+    }
+  } catch (err) {
+    embedResponse.className = "response-box";
+    embedResponse.innerHTML = `<span class="error">Error: ${err.message}</span>`;
+  }
+  setLoading(embedBtn, false);
+});
+
+// ── Utils ─────────────────────────────────────────────────────────
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Enter key to send chat
+document.getElementById("chatInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    chatSend.click();
+  }
+});
+
+// ── API Key - masked with toggle ──────────────────────────────────
+const apiKeyInput = document.getElementById("apiKey");
+const apiKeyToggle = document.getElementById("apiKeyToggle");
+apiKeyInput.value = localStorage.getItem("euri_api_key") || "";
+apiKeyInput.addEventListener("input", () => {
+  localStorage.setItem("euri_api_key", apiKeyInput.value);
+});
+apiKeyToggle.addEventListener("click", () => {
+  const isPassword = apiKeyInput.type === "password";
+  apiKeyInput.type = isPassword ? "text" : "password";
+  apiKeyToggle.innerHTML = isPassword ? "&#128064;" : "&#128065;";
+  apiKeyToggle.title = isPassword ? "Hide key" : "Show key";
+});
+
+// ── Prompt Tips - click to append ────────────────────────────────
+document.querySelectorAll(".tip-tag").forEach(tag => {
+  tag.addEventListener("click", () => {
+    const prompt = document.getElementById("imgPrompt");
+    const tip = tag.dataset.tip;
+    if (prompt.value && !prompt.value.endsWith(", ") && !prompt.value.endsWith("\n")) {
+      prompt.value += ", ";
+    }
+    prompt.value += tip;
+    prompt.focus();
+  });
+});
+</script>
+</body>
+</html>
