@@ -1,22 +1,24 @@
-# Euron - Euri API Toolkit
+# Euron - AI Testing Toolkit
 
-**Free AI API gateway with 200,000 tokens/day.** Access 24 models from 6 providers (Google, OpenAI, Meta, Groq, Alibaba, Together) through a single OpenAI-compatible endpoint.
+**Open-source AI testing toolkit.** Compare models, test APIs, benchmark performance — all from your browser.
 
-> Sign up free at [euron.one/euri](https://euron.one/euri)
+**[Open Toolkit](https://aiagentwithdhruv.github.io/Euron/)** | **[GitHub](https://github.com/aiagentwithdhruv/Euron)**
 
----
+## Live Tools
 
-### AI Model Arena — Compare 50+ Models Side-by-Side
+| Tool | What it does | Link |
+|------|-------------|------|
+| **Model Arena** | Compare 50+ models from 9 providers side-by-side | **[Open Arena](https://aiagentwithdhruv.github.io/Euron/model-arena/arena.html)** |
+| **Euri API Tester** | Test Euri's free AI gateway — chat, images, embeddings | **[Open Tester](https://aiagentwithdhruv.github.io/Euron/euri-tester/)** |
 
-**[Try it Live](https://aiagentwithdhruv.github.io/Euron/model-arena/arena.html)** — pit Claude vs GPT vs Gemini vs Llama in one click. 9 providers, parallel benchmarks, voting, leaderboard. Zero setup.
+### Run Locally
 
-Or run locally:
 ```bash
 git clone https://github.com/aiagentwithdhruv/Euron.git
-open Euron/model-arena/arena.html
+open Euron/index.html
 ```
 
----
+Or open any HTML file directly — zero dependencies, no build step.
 
 ## Quick Start
 
@@ -50,16 +52,14 @@ response = client.chat.completions.create(model="gemini-2.5-flash", messages=[{"
 
 ## What's in this repo
 
-| File | Description |
+| Folder / File | Description |
 |------|-------------|
-| `test.html` | Interactive API tester — open in browser, test all 3 endpoints |
-| `model-arena/arena.html` | **[Model Arena (Live)](https://aiagentwithdhruv.github.io/Euron/model-arena/arena.html)** — compare 2-4 models side-by-side across 9 providers |
+| `index.html` | **[Landing page](https://aiagentwithdhruv.github.io/Euron/)** — links to all tools |
+| `model-arena/` | **[Model Arena](https://aiagentwithdhruv.github.io/Euron/model-arena/arena.html)** — compare 50+ models across 9 providers |
+| `euri-tester/` | **[Euri API Tester](https://aiagentwithdhruv.github.io/Euron/euri-tester/)** — chat, images, embeddings with free Euri API |
 | `euri-client.ts` | TypeScript client for Next.js / Node.js projects |
 | `euri-models.ts` | All 24 model definitions with types and metadata |
-| `examples/basic-chat.ts` | TypeScript usage examples (chat, embeddings, images) |
-| `examples/nextjs-api-route.ts` | Drop-in Next.js API route template |
-| `examples/n8n-http-request.md` | n8n workflow integration guide |
-| `examples/python-sdk.py` | Python examples (SDK + raw HTTP + LangChain) |
+| `examples/` | Usage examples — TypeScript, Python, n8n, Next.js |
 
 ## API Reference
 
