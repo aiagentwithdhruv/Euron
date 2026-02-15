@@ -3,37 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Euri Model Arena</title>
+  <title>AI Model Arena</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e4e4e7; min-height: 100vh; }
 
-    /* ── Header ─────────────────────────────────────── */
-    .header { background: linear-gradient(135deg, #1a1b2e, #2d1b4e); padding: 20px 32px; border-bottom: 1px solid #27272a; display: flex; align-items: center; justify-content: space-between; }
+    /* ── Header ─────────────────────────────────── */
+    .header { background: linear-gradient(135deg, #1a1b2e, #2d1b4e); padding: 18px 32px; border-bottom: 1px solid #27272a; display: flex; align-items: center; justify-content: space-between; }
     .header h1 { font-size: 22px; font-weight: 700; }
     .header h1 span { color: #a78bfa; }
     .header-right { display: flex; align-items: center; gap: 12px; }
     .badge { background: #22c55e20; color: #22c55e; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-    .badge-purple { background: #7c3aed20; color: #a78bfa; }
     .runs-counter { font-size: 12px; color: #71717a; }
 
-    /* ── API Key Bar ────────────────────────────────── */
-    .api-bar { background: #18181b; padding: 12px 32px; border-bottom: 1px solid #27272a; display: flex; gap: 12px; align-items: center; }
-    .api-bar label { font-size: 13px; color: #a1a1aa; white-space: nowrap; }
-    .api-key-wrap { flex: 1; position: relative; display: flex; align-items: center; max-width: 400px; }
-    .api-key-wrap input { width: 100%; background: #27272a; border: 1px solid #3f3f46; color: #e4e4e7; padding: 8px 40px 8px 12px; border-radius: 8px; font-size: 13px; font-family: monospace; }
-    .api-key-wrap input:focus { outline: none; border-color: #a78bfa; }
-    .api-key-toggle { position: absolute; right: 8px; background: none; border: none; color: #71717a; cursor: pointer; font-size: 16px; padding: 2px 6px; border-radius: 4px; }
-    .api-key-toggle:hover { color: #a1a1aa; background: #3f3f46; }
-    .token-info { font-size: 12px; color: #71717a; white-space: nowrap; margin-left: auto; }
+    /* ── Settings Panel ─────────────────────────── */
+    .settings-toggle { background: #27272a; border: 1px solid #3f3f46; color: #a1a1aa; padding: 6px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+    .settings-toggle:hover { background: #3f3f46; color: #e4e4e7; }
+    .settings-panel { display: none; background: #18181b; border-bottom: 1px solid #27272a; padding: 16px 32px; }
+    .settings-panel.open { display: block; }
+    .settings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+    .key-field { display: flex; flex-direction: column; gap: 4px; }
+    .key-field label { font-size: 11px; font-weight: 600; color: #71717a; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; }
+    .key-field input { background: #27272a; border: 1px solid #3f3f46; color: #e4e4e7; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-family: monospace; }
+    .key-field input:focus { outline: none; border-color: #a78bfa; }
+    .key-status { width: 8px; height: 8px; border-radius: 50%; background: #3f3f46; }
+    .key-status.active { background: #22c55e; }
+    .key-field .hint { font-size: 10px; color: #52525b; }
+    .settings-note { font-size: 11px; color: #52525b; margin-top: 12px; line-height: 1.6; }
 
-    /* ── Category Bar ───────────────────────────────── */
+    /* ── Category Bar ───────────────────────────── */
     .category-bar { display: flex; gap: 8px; padding: 12px 32px; overflow-x: auto; border-bottom: 1px solid #27272a; background: #18181b; }
     .category-tag { padding: 6px 16px; border-radius: 20px; font-size: 13px; background: #27272a; border: 1px solid #3f3f46; color: #a1a1aa; cursor: pointer; white-space: nowrap; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
     .category-tag:hover { border-color: #71717a; color: #e4e4e7; }
     .category-tag.active { background: #7c3aed30; border-color: #7c3aed; color: #c4b5fd; }
 
-    /* ── Prompt Area ────────────────────────────────── */
+    /* ── Prompt Area ────────────────────────────── */
     .prompt-section { padding: 16px 32px; border-bottom: 1px solid #27272a; }
     .prompt-row { display: flex; gap: 12px; align-items: flex-start; }
     .prompt-row textarea { flex: 1; background: #27272a; border: 1px solid #3f3f46; color: #e4e4e7; padding: 12px 14px; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; min-height: 80px; }
@@ -47,25 +51,41 @@
     .btn-secondary:hover { background: #3f3f46; }
     .btn-sm { padding: 6px 12px; font-size: 12px; }
 
-    /* ── Model Picker ───────────────────────────────── */
-    .model-section { padding: 12px 32px; border-bottom: 1px solid #27272a; }
+    /* ── Model Picker ───────────────────────────── */
+    .model-section { padding: 12px 32px 16px; border-bottom: 1px solid #27272a; }
     .model-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
     .model-section-header h3 { font-size: 13px; font-weight: 600; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px; }
-    .model-section-header .selected-count { font-size: 12px; color: #71717a; }
-    .model-picker { display: flex; flex-wrap: wrap; gap: 8px; }
-    .model-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #27272a; border: 1px solid #3f3f46; cursor: pointer; font-size: 13px; transition: all 0.15s; user-select: none; }
+    .selected-count { font-size: 12px; color: #71717a; }
+    .provider-group { margin-bottom: 8px; }
+    .provider-group-label { font-size: 11px; font-weight: 600; color: #52525b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+    .model-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+    .model-chip { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 6px; background: #27272a; border: 1px solid #3f3f46; cursor: pointer; font-size: 12px; transition: all 0.15s; user-select: none; }
     .model-chip:hover { border-color: #71717a; }
     .model-chip.selected { border-color: #7c3aed; background: #7c3aed15; color: #c4b5fd; }
     .model-chip.disabled { opacity: 0.35; cursor: not-allowed; }
-    .provider-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .provider-google { background: #4285f4; }
-    .provider-openai { background: #10a37f; }
-    .provider-meta { background: #1877f2; }
-    .provider-groq { background: #f97316; }
-    .provider-alibaba { background: #ff6a00; }
-    .chip-speed { font-size: 10px; color: #52525b; margin-left: 4px; }
+    .model-chip.locked { opacity: 0.3; cursor: not-allowed; border-style: dashed; }
+    .provider-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .chip-speed { font-size: 10px; color: #52525b; }
 
-    /* ── Arena Grid ──────────────────────────────────── */
+    /* Provider colors */
+    .prov-euri { background: #a78bfa; }
+    .prov-openai { background: #10a37f; }
+    .prov-anthropic { background: #d4a574; }
+    .prov-google { background: #4285f4; }
+    .prov-groq { background: #f97316; }
+    .prov-openrouter { background: #6366f1; }
+    .prov-deepseek { background: #3b82f6; }
+    .prov-xai { background: #ef4444; }
+    .prov-mistral { background: #ff7000; }
+
+    /* Custom model input */
+    .custom-model-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+    .custom-model-row select { background: #27272a; border: 1px solid #3f3f46; color: #e4e4e7; padding: 6px 10px; border-radius: 6px; font-size: 12px; }
+    .custom-model-row input { background: #27272a; border: 1px solid #3f3f46; color: #e4e4e7; padding: 6px 10px; border-radius: 6px; font-size: 12px; flex: 1; max-width: 300px; font-family: monospace; }
+    .custom-model-row input:focus, .custom-model-row select:focus { outline: none; border-color: #a78bfa; }
+    .custom-model-row .btn { padding: 6px 12px; font-size: 12px; }
+
+    /* ── Arena Grid ──────────────────────────────── */
     .arena-section { padding: 20px 32px; }
     .arena-grid { display: grid; gap: 16px; }
     .arena-grid.cols-2 { grid-template-columns: 1fr 1fr; }
@@ -75,22 +95,22 @@
 
     .model-card { background: #1a1b23; border: 1px solid #27272a; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; transition: border-color 0.2s; }
     .model-card.winner { border-color: #22c55e40; }
-    .model-card-header { padding: 12px 16px; border-bottom: 1px solid #27272a; display: flex; align-items: center; justify-content: space-between; }
-    .model-card-header .model-name { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+    .model-card-header { padding: 10px 14px; border-bottom: 1px solid #27272a; display: flex; align-items: center; justify-content: space-between; }
+    .model-name { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13px; }
     .model-card-status { font-size: 14px; }
-    .model-card-body { padding: 16px; flex: 1; overflow-y: auto; max-height: 350px; font-size: 13px; line-height: 1.7; white-space: pre-wrap; word-wrap: break-word; color: #d4d4d8; }
+    .model-card-body { padding: 14px; flex: 1; overflow-y: auto; max-height: 350px; font-size: 13px; line-height: 1.7; white-space: pre-wrap; word-wrap: break-word; color: #d4d4d8; }
     .model-card-body.loading { display: flex; align-items: center; justify-content: center; color: #71717a; font-style: italic; gap: 10px; min-height: 100px; }
     .model-card-body .error { color: #f87171; }
-    .model-card-footer { padding: 10px 16px; border-top: 1px solid #27272a; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-    .metric { display: flex; flex-direction: column; align-items: center; padding: 4px 10px; min-width: 60px; }
-    .metric-value { font-size: 16px; font-weight: 700; color: #e4e4e7; }
+    .model-card-footer { padding: 8px 14px; border-top: 1px solid #27272a; display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
+    .metric { display: flex; flex-direction: column; align-items: center; padding: 3px 8px; min-width: 54px; }
+    .metric-value { font-size: 15px; font-weight: 700; color: #e4e4e7; }
     .metric-value.best { color: #22c55e; }
-    .metric-label { font-size: 9px; color: #71717a; text-transform: uppercase; letter-spacing: 0.5px; }
-    .vote-btn { padding: 5px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; background: none; border: 1px solid #3f3f46; color: #a1a1aa; cursor: pointer; transition: all 0.2s; margin-left: auto; }
+    .metric-label { font-size: 9px; color: #71717a; text-transform: uppercase; letter-spacing: 0.3px; }
+    .vote-btn { padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; background: none; border: 1px solid #3f3f46; color: #a1a1aa; cursor: pointer; transition: all 0.2s; margin-left: auto; }
     .vote-btn:hover { border-color: #22c55e; color: #22c55e; }
     .vote-btn.voted { background: #22c55e20; border-color: #22c55e; color: #22c55e; }
 
-    /* ── Results Section ─────────────────────────────── */
+    /* ── Results Section ─────────────────────────── */
     .results-section { padding: 0 32px 32px; }
     .results-tabs { display: flex; gap: 0; border-bottom: 1px solid #27272a; margin-bottom: 16px; }
     .results-tab { padding: 10px 20px; font-size: 13px; font-weight: 500; color: #71717a; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
@@ -98,22 +118,17 @@
     .results-tab.active { color: #a78bfa; border-bottom-color: #a78bfa; }
     .results-content { display: none; }
     .results-content.active { display: block; }
-
     .results-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .results-table th { padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: #71717a; letter-spacing: 0.5px; border-bottom: 1px solid #27272a; cursor: pointer; user-select: none; white-space: nowrap; }
     .results-table th:hover { color: #a78bfa; }
     .results-table th.sorted { color: #a78bfa; }
     .results-table td { padding: 10px 12px; border-bottom: 1px solid #27272a15; }
     .results-table tr:hover { background: #27272a30; }
-    .results-table .best-cell { color: #22c55e; font-weight: 600; }
-
-    /* ── Leaderboard ─────────────────────────────────── */
+    .best-cell { color: #22c55e; font-weight: 600; }
     .leaderboard-empty { text-align: center; padding: 40px; color: #52525b; font-style: italic; }
+    .lb-winrate { display: flex; align-items: center; gap: 8px; }
     .lb-bar { height: 6px; border-radius: 3px; background: #3f3f46; overflow: hidden; min-width: 60px; }
     .lb-bar-fill { height: 100%; border-radius: 3px; background: #7c3aed; }
-    .lb-winrate { display: flex; align-items: center; gap: 8px; }
-
-    /* ── History List ─────────────────────────────────── */
     .history-entry { background: #1a1b23; border: 1px solid #27272a; border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
     .history-header { padding: 10px 14px; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 13px; }
     .history-header:hover { background: #27272a30; }
@@ -124,20 +139,15 @@
     .history-entry.open .history-body { display: block; }
     .history-actions { display: flex; gap: 8px; margin-bottom: 12px; }
 
-    /* ── Spinner ──────────────────────────────────────── */
     .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #52525b; border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.6s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Responsive ──────────────────────────────────── */
-    @media (max-width: 1200px) {
-      .arena-grid.cols-4 { grid-template-columns: 1fr 1fr; }
-      .arena-grid.cols-3 { grid-template-columns: 1fr 1fr; }
-    }
+    @media (max-width: 1200px) { .arena-grid.cols-4, .arena-grid.cols-3 { grid-template-columns: 1fr 1fr; } }
     @media (max-width: 768px) {
       .arena-grid { grid-template-columns: 1fr !important; }
-      .model-picker { gap: 6px; }
       .prompt-row { flex-direction: column; }
       .prompt-controls { flex-direction: row; }
+      .settings-grid { grid-template-columns: 1fr; }
       .api-bar, .category-bar, .prompt-section, .model-section, .arena-section, .results-section { padding-left: 16px; padding-right: 16px; }
       .header { padding: 16px; }
     }
@@ -147,33 +157,34 @@
 
 <!-- ═══ HEADER ═══ -->
 <div class="header">
-  <h1><span>euri</span> Model Arena</h1>
+  <h1><span>AI</span> Model Arena</h1>
   <div class="header-right">
     <span class="runs-counter" id="runsCounter"></span>
-    <span class="badge">200K tokens/day FREE</span>
+    <button class="settings-toggle" id="settingsToggle">
+      <span>&#9881;</span> API Keys
+    </button>
   </div>
 </div>
 
-<!-- ═══ API KEY BAR ═══ -->
-<div class="api-bar">
-  <label>API Key:</label>
-  <div class="api-key-wrap">
-    <input type="password" id="apiKey" placeholder="Enter your Euri API key..." />
-    <button class="api-key-toggle" id="apiKeyToggle" title="Show/hide key">&#128065;</button>
+<!-- ═══ SETTINGS PANEL ═══ -->
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-grid" id="settingsGrid"></div>
+  <div class="settings-note">
+    Keys are stored locally in your browser (localStorage). Never sent anywhere except the provider's own API.<br>
+    Tip: <strong>OpenRouter</strong> gives access to 400+ models with a single key. <strong>Euri</strong> is free (200K tokens/day). <strong>Groq</strong> has a free tier with ultra-fast inference.
   </div>
-  <span class="token-info" id="tokenInfo">Tokens remaining: 200,000</span>
 </div>
 
 <!-- ═══ CATEGORY BAR ═══ -->
 <div class="category-bar" id="categoryBar"></div>
 
-<!-- ═══ PROMPT AREA ═══ -->
+<!-- ═══ PROMPT ═══ -->
 <div class="prompt-section">
   <div class="prompt-row">
     <textarea id="arenaPrompt" placeholder="Enter your test prompt or pick a category above..."></textarea>
     <div class="prompt-controls">
       <button class="btn btn-primary" id="runArena">Run Arena</button>
-      <button class="btn btn-secondary btn-sm" id="shufflePrompt">Shuffle Prompt</button>
+      <button class="btn btn-secondary btn-sm" id="shufflePrompt">Shuffle</button>
     </div>
   </div>
 </div>
@@ -184,29 +195,37 @@
     <h3>Select 2-4 Models to Compare</h3>
     <span class="selected-count" id="selectedCount">0 / 4 selected</span>
   </div>
-  <div class="model-picker" id="modelPicker"></div>
+  <div id="modelPickerContainer"></div>
+  <div class="custom-model-row">
+    <select id="customProvider">
+      <option value="openrouter">OpenRouter</option>
+      <option value="openai">OpenAI</option>
+      <option value="groq">Groq</option>
+      <option value="deepseek">DeepSeek</option>
+      <option value="xai">xAI</option>
+      <option value="mistral">Mistral</option>
+    </select>
+    <input type="text" id="customModelId" placeholder="Type any model ID (e.g. google/gemini-2.5-pro)" />
+    <button class="btn btn-secondary btn-sm" onclick="addCustomModel()">+ Add</button>
+  </div>
 </div>
 
 <!-- ═══ ARENA GRID ═══ -->
 <div class="arena-section">
   <div class="arena-grid" id="arenaGrid">
-    <div class="arena-empty">Select models above and click "Run Arena" to start comparing</div>
+    <div class="arena-empty">Select models and click "Run Arena" to start comparing</div>
   </div>
 </div>
 
-<!-- ═══ RESULTS SECTION ═══ -->
+<!-- ═══ RESULTS ═══ -->
 <div class="results-section" id="resultsSection" style="display:none;">
   <div class="results-tabs">
     <div class="results-tab active" data-rtab="thisrun">This Run</div>
     <div class="results-tab" data-rtab="leaderboard">Leaderboard</div>
     <div class="results-tab" data-rtab="history">History</div>
   </div>
-  <div class="results-content active" id="rtab-thisrun">
-    <div id="runResultsTable"></div>
-  </div>
-  <div class="results-content" id="rtab-leaderboard">
-    <div id="leaderboardTable"></div>
-  </div>
+  <div class="results-content active" id="rtab-thisrun"><div id="runResultsTable"></div></div>
+  <div class="results-content" id="rtab-leaderboard"><div id="leaderboardTable"></div></div>
   <div class="results-content" id="rtab-history">
     <div class="history-actions">
       <button class="btn btn-secondary btn-sm" id="exportHistory">Export JSON</button>
@@ -218,322 +237,431 @@
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
-// CONFIG
+// PROVIDERS
 // ═══════════════════════════════════════════════════════════════════
-const BASE = "https://api.euron.one/api/v1/euri";
-const MAX_MODELS = 4;
-const MIN_MODELS = 2;
-const HISTORY_KEY = "euri_arena_history";
-const MAX_HISTORY = 100;
+const PROVIDERS = {
+  euri:       { name: "Euri (Free)",  base: "https://api.euron.one/api/v1/euri",  format: "openai",     color: "prov-euri",      keyName: "euri_key",       hint: "Free 200K tokens/day — euron.one/euri" },
+  openai:     { name: "OpenAI",       base: "https://api.openai.com/v1",          format: "openai",     color: "prov-openai",    keyName: "openai_key",     hint: "platform.openai.com/api-keys" },
+  anthropic:  { name: "Anthropic",    base: "https://api.anthropic.com/v1",       format: "anthropic",  color: "prov-anthropic",  keyName: "anthropic_key",  hint: "console.anthropic.com — may need CORS proxy" },
+  google:     { name: "Google",       base: "https://generativelanguage.googleapis.com/v1beta", format: "google", color: "prov-google", keyName: "google_key", hint: "aistudio.google.com/apikey" },
+  groq:       { name: "Groq",         base: "https://api.groq.com/openai/v1",     format: "openai",     color: "prov-groq",      keyName: "groq_key",       hint: "Free tier — console.groq.com" },
+  openrouter: { name: "OpenRouter",   base: "https://openrouter.ai/api/v1",       format: "openai",     color: "prov-openrouter", keyName: "openrouter_key", hint: "400+ models — openrouter.ai/keys" },
+  deepseek:   { name: "DeepSeek",     base: "https://api.deepseek.com",           format: "openai",     color: "prov-deepseek",  keyName: "deepseek_key",   hint: "platform.deepseek.com" },
+  xai:        { name: "xAI (Grok)",   base: "https://api.x.ai/v1",               format: "openai",     color: "prov-xai",       keyName: "xai_key",        hint: "console.x.ai" },
+  mistral:    { name: "Mistral",      base: "https://api.mistral.ai/v1",          format: "openai",     color: "prov-mistral",   keyName: "mistral_key",    hint: "console.mistral.ai" },
+};
 
 // ═══════════════════════════════════════════════════════════════════
-// MODELS (19 text models — excludes Llama Guard safety classifier)
+// MODELS (curated list per provider)
 // ═══════════════════════════════════════════════════════════════════
 const MODELS = [
-  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "google", speed: "very-fast" },
-  { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", provider: "google", speed: "fast" },
-  { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash", provider: "google", speed: "very-fast" },
-  { id: "gemini-2.5-flash-lite-preview-06-17", name: "Gemini 2.5 Flash Lite", provider: "google", speed: "ultra-fast" },
-  { id: "gemini-2.5-pro-preview-06-05", name: "Gemini 2.5 Pro Preview", provider: "google", speed: "fast" },
-  { id: "gemini-2.5-flash-preview-05-20", name: "Gemini 2.5 Flash Preview", provider: "google", speed: "very-fast" },
-  { id: "gpt-5-nano-2025-08-07", name: "GPT-5 Nano", provider: "openai", speed: "ultra-fast" },
-  { id: "gpt-5-mini-2025-08-07", name: "GPT-5 Mini", provider: "openai", speed: "fast" },
-  { id: "gpt-4.1-nano", name: "GPT-4.1 Nano", provider: "openai", speed: "ultra-fast" },
-  { id: "gpt-4.1-mini", name: "GPT-4.1 Mini", provider: "openai", speed: "fast" },
-  { id: "openai/gpt-oss-20b", name: "GPT-OSS 20B", provider: "openai", speed: "fast" },
-  { id: "openai/gpt-oss-120b", name: "GPT-OSS 120B", provider: "openai", speed: "medium" },
-  { id: "llama-4-scout-17b-16e-instruct", name: "Llama 4 Scout", provider: "meta", speed: "fast" },
-  { id: "llama-4-maverick-17b-128e-instruct", name: "Llama 4 Maverick", provider: "meta", speed: "medium" },
-  { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", provider: "meta", speed: "medium" },
-  { id: "llama-3.1-8b-instant", name: "Llama 3.1 8B", provider: "meta", speed: "very-fast" },
-  { id: "groq/compound", name: "Groq Compound", provider: "groq", speed: "fast" },
-  { id: "groq/compound-mini", name: "Groq Compound Mini", provider: "groq", speed: "fast" },
-  { id: "qwen/qwen3-32b", name: "Qwen 3 32B", provider: "alibaba", speed: "fast" },
+  // ── Euri (Free) ──
+  { id: "gemini-2.5-flash",       name: "Gemini 2.5 Flash",      provider: "euri", speed: "very-fast" },
+  { id: "gemini-2.5-pro",         name: "Gemini 2.5 Pro",        provider: "euri", speed: "fast" },
+  { id: "gemini-2.0-flash",       name: "Gemini 2.0 Flash",      provider: "euri", speed: "very-fast" },
+  { id: "gpt-4.1-nano",           name: "GPT-4.1 Nano",          provider: "euri", speed: "ultra-fast" },
+  { id: "gpt-4.1-mini",           name: "GPT-4.1 Mini",          provider: "euri", speed: "fast" },
+  { id: "llama-3.3-70b-versatile",name: "Llama 3.3 70B",         provider: "euri", speed: "medium" },
+  { id: "llama-3.1-8b-instant",   name: "Llama 3.1 8B",          provider: "euri", speed: "very-fast" },
+  { id: "groq/compound",          name: "Groq Compound",         provider: "euri", speed: "fast" },
+  { id: "qwen/qwen3-32b",         name: "Qwen 3 32B",            provider: "euri", speed: "fast" },
+
+  // ── OpenAI (Direct) ──
+  { id: "gpt-4o",                 name: "GPT-4o",                provider: "openai", speed: "fast" },
+  { id: "gpt-4o-mini",            name: "GPT-4o Mini",           provider: "openai", speed: "very-fast" },
+  { id: "gpt-4.1",                name: "GPT-4.1",               provider: "openai", speed: "fast" },
+  { id: "gpt-4.1-mini",           name: "GPT-4.1 Mini",          provider: "openai", speed: "fast" },
+  { id: "gpt-4.1-nano",           name: "GPT-4.1 Nano",          provider: "openai", speed: "ultra-fast" },
+  { id: "o4-mini",                name: "o4 Mini (Reasoning)",    provider: "openai", speed: "medium" },
+  { id: "o3-mini",                name: "o3 Mini (Reasoning)",    provider: "openai", speed: "medium" },
+
+  // ── Anthropic ──
+  { id: "claude-opus-4-6",        name: "Claude Opus 4.6",       provider: "anthropic", speed: "medium" },
+  { id: "claude-sonnet-4-5-20250929", name: "Claude Sonnet 4.5",  provider: "anthropic", speed: "fast" },
+  { id: "claude-haiku-4-5-20251001",  name: "Claude Haiku 4.5",   provider: "anthropic", speed: "very-fast" },
+
+  // ── Google (Direct Gemini) ──
+  { id: "gemini-2.5-flash",       name: "Gemini 2.5 Flash",      provider: "google", speed: "very-fast" },
+  { id: "gemini-2.5-pro",         name: "Gemini 2.5 Pro",        provider: "google", speed: "fast" },
+  { id: "gemini-2.0-flash",       name: "Gemini 2.0 Flash",      provider: "google", speed: "very-fast" },
+
+  // ── Groq (Ultra-fast inference) ──
+  { id: "llama-3.3-70b-versatile",         name: "Llama 3.3 70B",      provider: "groq", speed: "ultra-fast" },
+  { id: "llama-3.1-8b-instant",            name: "Llama 3.1 8B",       provider: "groq", speed: "ultra-fast" },
+  { id: "llama-4-scout-17b-16e-instruct",  name: "Llama 4 Scout",      provider: "groq", speed: "very-fast" },
+  { id: "llama-4-maverick-17b-128e-instruct", name: "Llama 4 Maverick", provider: "groq", speed: "fast" },
+  { id: "qwen/qwen3-32b",                  name: "Qwen 3 32B",         provider: "groq", speed: "very-fast" },
+  { id: "gemma2-9b-it",                    name: "Gemma 2 9B",         provider: "groq", speed: "ultra-fast" },
+
+  // ── OpenRouter (popular picks — or add any via custom input) ──
+  { id: "anthropic/claude-sonnet-4-5",  name: "Claude Sonnet 4.5",    provider: "openrouter", speed: "fast" },
+  { id: "anthropic/claude-haiku-4-5",   name: "Claude Haiku 4.5",     provider: "openrouter", speed: "very-fast" },
+  { id: "openai/gpt-4o",               name: "GPT-4o",               provider: "openrouter", speed: "fast" },
+  { id: "openai/gpt-4.1-mini",         name: "GPT-4.1 Mini",         provider: "openrouter", speed: "fast" },
+  { id: "google/gemini-2.5-flash",     name: "Gemini 2.5 Flash",     provider: "openrouter", speed: "very-fast" },
+  { id: "google/gemini-2.5-pro",       name: "Gemini 2.5 Pro",       provider: "openrouter", speed: "fast" },
+  { id: "deepseek/deepseek-chat-v3-0324", name: "DeepSeek V3",       provider: "openrouter", speed: "fast" },
+  { id: "deepseek/deepseek-r1",        name: "DeepSeek R1",          provider: "openrouter", speed: "medium" },
+  { id: "meta-llama/llama-3.3-70b-instruct", name: "Llama 3.3 70B",  provider: "openrouter", speed: "fast" },
+  { id: "mistralai/mistral-large",     name: "Mistral Large",        provider: "openrouter", speed: "fast" },
+  { id: "x-ai/grok-3-mini",            name: "Grok 3 Mini",          provider: "openrouter", speed: "fast" },
+  { id: "qwen/qwen3-32b",              name: "Qwen 3 32B",           provider: "openrouter", speed: "fast" },
+
+  // ── DeepSeek (Direct) ──
+  { id: "deepseek-chat",          name: "DeepSeek Chat (V3)",     provider: "deepseek", speed: "fast" },
+  { id: "deepseek-reasoner",      name: "DeepSeek Reasoner (R1)", provider: "deepseek", speed: "medium" },
+
+  // ── xAI (Grok) ──
+  { id: "grok-3",                 name: "Grok 3",                provider: "xai", speed: "fast" },
+  { id: "grok-3-mini",            name: "Grok 3 Mini",           provider: "xai", speed: "very-fast" },
+
+  // ── Mistral (Direct) ──
+  { id: "mistral-large-latest",   name: "Mistral Large",         provider: "mistral", speed: "fast" },
+  { id: "mistral-small-latest",   name: "Mistral Small",         provider: "mistral", speed: "very-fast" },
 ];
 
 // ═══════════════════════════════════════════════════════════════════
-// BENCHMARK CATEGORIES
+// BENCHMARKS
 // ═══════════════════════════════════════════════════════════════════
 const BENCHMARKS = {
-  quick_chat: {
-    name: "Quick Chat", icon: "\u{1F4AC}",
-    prompts: [
-      "Explain quantum computing to a 10-year-old in exactly 3 sentences.",
-      "What are the top 3 reasons why the Roman Empire fell? Be concise.",
-      "Compare and contrast machine learning and traditional programming in a brief paragraph.",
-      "What would happen if the Moon suddenly disappeared? Give 5 consequences.",
-      "Explain the difference between a virus and a bacterium. Use an analogy.",
-    ],
-  },
-  code_generation: {
-    name: "Code Gen", icon: "\u{1F4BB}",
-    prompts: [
-      "Write a JavaScript function that finds the longest palindromic substring in a given string. Include comments.",
-      "Write a Python function to merge two sorted arrays in O(n) time. No built-in sort.",
-      "Create a TypeScript function that debounces another function with a configurable delay. Include type definitions.",
-      "Write a recursive JavaScript function to flatten a deeply nested array. Handle edge cases.",
-      "Write a SQL query to find employees who earn more than their manager, given tables: employees(id, name, salary, manager_id).",
-    ],
-  },
-  reasoning: {
-    name: "Reasoning", icon: "\u{1F9E0}",
-    prompts: [
-      "A bat and a ball cost $1.10 in total. The bat costs $1.00 more than the ball. How much does the ball cost? Show your reasoning step by step.",
-      "If it takes 5 machines 5 minutes to make 5 widgets, how long would it take 100 machines to make 100 widgets? Explain your logic.",
-      "Three people check into a hotel room that costs $30. They each pay $10. The manager realizes the room is only $25, so he sends the bellboy with $5. The bellboy keeps $2 and gives each person $1 back. Now each person has paid $9 (total $27), plus $2 the bellboy kept = $29. Where did the extra dollar go?",
-      "You have 8 identical-looking balls. One is heavier. Using a balance scale, what is the minimum number of weighings needed to find the heavy ball? Prove it.",
-      "A farmer needs to cross a river with a fox, a chicken, and a bag of grain. The boat can only carry the farmer and one item. The fox eats the chicken if left alone, the chicken eats the grain. How does the farmer get everything across?",
-    ],
-  },
-  creative_writing: {
-    name: "Creative", icon: "\u{270D}\u{FE0F}",
-    prompts: [
-      "Write a 6-word story that makes the reader feel something profound. Then explain your creative choices.",
-      "Describe what the internet looks like from the perspective of a single data packet traveling from New York to Tokyo.",
-      "Write a product description for a time machine, in the style of an Apple product launch. Keep it under 150 words.",
-      "Create a conversation between two AI models arguing about which one is smarter. Make it funny but insightful.",
-      "Explain recursion using a story about a Russian nesting doll who is also a detective.",
-    ],
-  },
-  instruction_following: {
-    name: "Instructions", icon: "\u{1F4CB}",
-    prompts: [
-      "List exactly 5 programming languages. For each, give exactly one sentence. Format as a numbered list. Do NOT include Python.",
-      "Write a haiku (5-7-5 syllables) about artificial intelligence. Then verify the syllable count for each line.",
-      "Respond with a valid JSON object containing: your name (string), confidence (number 0-1), top 3 capabilities (array of strings). Nothing else -- only the JSON.",
-      "Write exactly 3 paragraphs about climate change. Each paragraph must be exactly 2 sentences long. The first word of each paragraph must start with A, B, and C respectively.",
-      "Create a markdown table with exactly 4 rows and 3 columns comparing JavaScript, Python, and Rust on Speed, Ease of Learning, and Ecosystem Size. Use only High, Medium, or Low.",
-    ],
-  },
-  custom: {
-    name: "Custom", icon: "\u{270F}\u{FE0F}",
-    prompts: [],
-  },
+  quick_chat: { name: "Quick Chat", icon: "\u{1F4AC}", prompts: [
+    "Explain quantum computing to a 10-year-old in exactly 3 sentences.",
+    "What are the top 3 reasons why the Roman Empire fell? Be concise.",
+    "Compare and contrast machine learning and traditional programming in a brief paragraph.",
+    "What would happen if the Moon suddenly disappeared? Give 5 consequences.",
+    "Explain the difference between a virus and a bacterium. Use an analogy.",
+  ]},
+  code_generation: { name: "Code Gen", icon: "\u{1F4BB}", prompts: [
+    "Write a JavaScript function that finds the longest palindromic substring in a given string. Include comments.",
+    "Write a Python function to merge two sorted arrays in O(n) time. No built-in sort.",
+    "Create a TypeScript function that debounces another function with a configurable delay. Include type definitions.",
+    "Write a recursive JavaScript function to flatten a deeply nested array. Handle edge cases.",
+    "Write a SQL query to find employees who earn more than their manager, given tables: employees(id, name, salary, manager_id).",
+  ]},
+  reasoning: { name: "Reasoning", icon: "\u{1F9E0}", prompts: [
+    "A bat and a ball cost $1.10 in total. The bat costs $1.00 more than the ball. How much does the ball cost? Show your reasoning step by step.",
+    "If it takes 5 machines 5 minutes to make 5 widgets, how long would it take 100 machines to make 100 widgets? Explain your logic.",
+    "Three people check into a hotel room that costs $30. They each pay $10. The manager realizes the room is only $25, so he sends the bellboy with $5. The bellboy keeps $2 and gives each person $1 back. Now each person has paid $9 (total $27), plus $2 the bellboy kept = $29. Where did the extra dollar go?",
+    "You have 8 identical-looking balls. One is heavier. Using a balance scale, what is the minimum number of weighings needed to find the heavy ball? Prove it.",
+    "A farmer needs to cross a river with a fox, a chicken, and a bag of grain. The boat can only carry the farmer and one item. The fox eats the chicken if left alone, the chicken eats the grain. How does the farmer get everything across?",
+  ]},
+  creative: { name: "Creative", icon: "\u{270D}\u{FE0F}", prompts: [
+    "Write a 6-word story that makes the reader feel something profound. Then explain your creative choices.",
+    "Describe what the internet looks like from the perspective of a single data packet traveling from New York to Tokyo.",
+    "Write a product description for a time machine, in the style of an Apple product launch. Keep it under 150 words.",
+    "Create a conversation between two AI models arguing about which one is smarter. Make it funny but insightful.",
+    "Explain recursion using a story about a Russian nesting doll who is also a detective.",
+  ]},
+  instructions: { name: "Instructions", icon: "\u{1F4CB}", prompts: [
+    "List exactly 5 programming languages. For each, give exactly one sentence. Format as a numbered list. Do NOT include Python.",
+    "Write a haiku (5-7-5 syllables) about artificial intelligence. Then verify the syllable count for each line.",
+    "Respond with a valid JSON object containing: your name (string), confidence (number 0-1), top 3 capabilities (array of strings). Nothing else -- only the JSON.",
+    "Write exactly 3 paragraphs about climate change. Each paragraph must be exactly 2 sentences long. The first word of each paragraph must start with A, B, and C respectively.",
+    "Create a markdown table with exactly 4 rows and 3 columns comparing JavaScript, Python, and Rust on Speed, Ease of Learning, and Ecosystem Size. Use only High, Medium, or Low.",
+  ]},
+  custom: { name: "Custom", icon: "\u{270F}\u{FE0F}", prompts: [] },
 };
 
 // ═══════════════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════════════
+const MAX_MODELS = 4;
+const MIN_MODELS = 2;
+const HISTORY_KEY = "arena_history";
+const MAX_HISTORY = 100;
+
 const STATE = {
-  selectedModels: ["gemini-2.5-flash", "gpt-4.1-nano", "llama-3.1-8b-instant"],
+  selectedModels: [], // [{id, provider, name}]
   currentCategory: "quick_chat",
-  currentPrompt: "",
   currentRunId: null,
+  currentPrompt: "",
   isRunning: false,
   results: {},
-  totalTokensUsed: 0,
   runsThisSession: 0,
   promptIndex: {},
   sortCol: "latency",
   sortAsc: true,
 };
-
-// Initialize prompt index per category
 Object.keys(BENCHMARKS).forEach(k => STATE.promptIndex[k] = 0);
 
 // ═══════════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════
-function getKey() {
-  const k = document.getElementById("apiKey").value.trim();
-  if (!k) { alert("Please enter your Euri API key first!"); return null; }
-  return k;
+function getProviderKey(providerId) {
+  return localStorage.getItem(PROVIDERS[providerId].keyName) || "";
 }
-
+function hasKey(providerId) {
+  return getProviderKey(providerId).trim().length > 0;
+}
 function extractContent(content) {
   if (!content) return "";
   if (typeof content === "string") return content;
   if (Array.isArray(content)) return content.filter(p => p.type === "text").map(p => p.text).join("");
   return JSON.stringify(content);
 }
-
 function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
+  const d = document.createElement("div"); d.textContent = text; return d.innerHTML;
 }
-
-function capitalize(s) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
-function updateTokenDisplay() {
-  const remaining = Math.max(0, 200000 - STATE.totalTokensUsed);
-  const pct = ((STATE.totalTokensUsed / 200000) * 100).toFixed(1);
-  const color = remaining < 20000 ? "#f87171" : remaining < 50000 ? "#fbbf24" : "#22c55e";
-  document.getElementById("tokenInfo").innerHTML = `<span style="color:${color}">${remaining.toLocaleString()}</span> tokens remaining (${pct}% used)`;
-}
-
-function updateRunsCounter() {
-  const el = document.getElementById("runsCounter");
-  if (STATE.runsThisSession > 0) {
-    el.textContent = STATE.runsThisSession + " run" + (STATE.runsThisSession > 1 ? "s" : "") + " this session";
-  }
-}
-
-function cssEscape(id) {
-  return id.replace(/[\/\.]/g, "_");
-}
-
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+function modelKey(m) { return m.provider + "::" + m.id; }
+function cssId(m) { return "card-" + (m.provider + "_" + m.id).replace(/[\/\.\:]/g, "_"); }
 function timeAgo(ts) {
-  const diff = Date.now() - ts;
-  if (diff < 60000) return "just now";
-  if (diff < 3600000) return Math.floor(diff / 60000) + "m ago";
-  if (diff < 86400000) return Math.floor(diff / 3600000) + "h ago";
+  const d = Date.now() - ts;
+  if (d < 60000) return "just now";
+  if (d < 3600000) return Math.floor(d / 60000) + "m ago";
+  if (d < 86400000) return Math.floor(d / 3600000) + "h ago";
   return new Date(ts).toLocaleDateString();
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// CATEGORY BAR
+// SETTINGS PANEL
 // ═══════════════════════════════════════════════════════════════════
-function renderCategories() {
-  const bar = document.getElementById("categoryBar");
-  bar.innerHTML = "";
-  Object.entries(BENCHMARKS).forEach(([key, cat]) => {
-    const tag = document.createElement("div");
-    tag.className = "category-tag" + (key === STATE.currentCategory ? " active" : "");
-    tag.dataset.category = key;
-    tag.innerHTML = `<span>${cat.icon}</span> ${cat.name}`;
-    tag.addEventListener("click", () => selectCategory(key));
-    bar.appendChild(tag);
+function renderSettings() {
+  const grid = document.getElementById("settingsGrid");
+  grid.innerHTML = Object.entries(PROVIDERS).map(([id, p]) => {
+    const val = getProviderKey(id);
+    return `<div class="key-field">
+      <label><span class="key-status ${val ? "active" : ""}"></span><span class="provider-dot ${p.color}" style="display:inline-block"></span> ${p.name}</label>
+      <input type="password" data-provider="${id}" value="${val}" placeholder="Enter API key..." />
+      <span class="hint">${p.hint}</span>
+    </div>`;
+  }).join("");
+
+  grid.querySelectorAll("input[data-provider]").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const prov = inp.dataset.provider;
+      localStorage.setItem(PROVIDERS[prov].keyName, inp.value.trim());
+      inp.closest(".key-field").querySelector(".key-status").className = "key-status" + (inp.value.trim() ? " active" : "");
+      renderModelPicker();
+    });
   });
 }
 
+document.getElementById("settingsToggle").addEventListener("click", () => {
+  document.getElementById("settingsPanel").classList.toggle("open");
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// CATEGORIES
+// ═══════════════════════════════════════════════════════════════════
+function renderCategories() {
+  const bar = document.getElementById("categoryBar");
+  bar.innerHTML = Object.entries(BENCHMARKS).map(([key, cat]) =>
+    `<div class="category-tag ${key === STATE.currentCategory ? "active" : ""}" data-category="${key}">${cat.icon} ${cat.name}</div>`
+  ).join("");
+  bar.querySelectorAll(".category-tag").forEach(t => t.addEventListener("click", () => selectCategory(t.dataset.category)));
+}
 function selectCategory(key) {
   STATE.currentCategory = key;
   document.querySelectorAll(".category-tag").forEach(t => t.classList.toggle("active", t.dataset.category === key));
-  if (key === "custom") {
-    document.getElementById("arenaPrompt").value = "";
-    document.getElementById("arenaPrompt").focus();
-  } else {
-    loadPromptFromCategory(key);
-  }
+  if (key === "custom") { document.getElementById("arenaPrompt").value = ""; document.getElementById("arenaPrompt").focus(); }
+  else loadPrompt(key);
 }
-
-function loadPromptFromCategory(key) {
-  const prompts = BENCHMARKS[key]?.prompts;
-  if (!prompts || prompts.length === 0) return;
-  const idx = STATE.promptIndex[key] % prompts.length;
-  document.getElementById("arenaPrompt").value = prompts[idx];
+function loadPrompt(key) {
+  const p = BENCHMARKS[key]?.prompts;
+  if (!p || !p.length) return;
+  document.getElementById("arenaPrompt").value = p[STATE.promptIndex[key] % p.length];
 }
-
 function shufflePrompt() {
-  const key = STATE.currentCategory;
-  if (key === "custom") return;
-  const prompts = BENCHMARKS[key]?.prompts;
-  if (!prompts || prompts.length === 0) return;
-  STATE.promptIndex[key] = (STATE.promptIndex[key] + 1) % prompts.length;
-  document.getElementById("arenaPrompt").value = prompts[STATE.promptIndex[key]];
+  const k = STATE.currentCategory;
+  if (k === "custom") return;
+  STATE.promptIndex[k] = (STATE.promptIndex[k] + 1) % (BENCHMARKS[k]?.prompts?.length || 1);
+  loadPrompt(k);
 }
 
 // ═══════════════════════════════════════════════════════════════════
 // MODEL PICKER
 // ═══════════════════════════════════════════════════════════════════
 function renderModelPicker() {
-  const container = document.getElementById("modelPicker");
+  const container = document.getElementById("modelPickerContainer");
   container.innerHTML = "";
+  const providerOrder = Object.keys(PROVIDERS);
 
-  const providers = ["google", "openai", "meta", "groq", "alibaba"];
-  providers.forEach(provider => {
-    const providerModels = MODELS.filter(m => m.provider === provider);
-    providerModels.forEach(model => {
-      const isSelected = STATE.selectedModels.includes(model.id);
-      const isDisabled = !isSelected && STATE.selectedModels.length >= MAX_MODELS;
+  providerOrder.forEach(providerId => {
+    const provModels = MODELS.filter(m => m.provider === providerId);
+    if (!provModels.length) return;
+    const prov = PROVIDERS[providerId];
+    const available = hasKey(providerId);
+
+    const group = document.createElement("div");
+    group.className = "provider-group";
+    group.innerHTML = `<div class="provider-group-label"><span class="provider-dot ${prov.color}" style="display:inline-block"></span>${prov.name} ${!available ? '<span style="color:#f87171;font-size:10px;text-transform:none">(no key)</span>' : ""}</div>`;
+
+    const picker = document.createElement("div");
+    picker.className = "model-picker";
+
+    provModels.forEach(model => {
+      const key = modelKey(model);
+      const isSelected = STATE.selectedModels.some(s => modelKey(s) === key);
+      const isFull = !isSelected && STATE.selectedModels.length >= MAX_MODELS;
       const chip = document.createElement("div");
-      chip.className = "model-chip" + (isSelected ? " selected" : "") + (isDisabled ? " disabled" : "");
-      chip.innerHTML = `<span class="provider-dot provider-${model.provider}"></span>${model.name}<span class="chip-speed">${model.speed}</span>`;
+      chip.className = "model-chip" + (isSelected ? " selected" : "") + (!available ? " locked" : (isFull ? " disabled" : ""));
+      chip.innerHTML = `<span class="provider-dot ${prov.color}"></span>${model.name}<span class="chip-speed">${model.speed}</span>`;
+      chip.title = available ? model.id : "Add API key to unlock";
       chip.addEventListener("click", () => {
-        if (STATE.isRunning) return;
-        toggleModel(model.id);
+        if (STATE.isRunning || !available) return;
+        toggleModel(model);
       });
-      container.appendChild(chip);
+      picker.appendChild(chip);
     });
+
+    group.appendChild(picker);
+    container.appendChild(group);
   });
 
   document.getElementById("selectedCount").textContent = STATE.selectedModels.length + " / " + MAX_MODELS + " selected";
 }
 
-function toggleModel(id) {
-  const idx = STATE.selectedModels.indexOf(id);
+function toggleModel(model) {
+  const key = modelKey(model);
+  const idx = STATE.selectedModels.findIndex(s => modelKey(s) === key);
   if (idx >= 0) {
     if (STATE.selectedModels.length <= MIN_MODELS) return;
     STATE.selectedModels.splice(idx, 1);
   } else {
     if (STATE.selectedModels.length >= MAX_MODELS) return;
-    STATE.selectedModels.push(id);
+    STATE.selectedModels.push({ id: model.id, provider: model.provider, name: model.name });
   }
   renderModelPicker();
 }
 
+function addCustomModel() {
+  const prov = document.getElementById("customProvider").value;
+  const id = document.getElementById("customModelId").value.trim();
+  if (!id) { alert("Enter a model ID!"); return; }
+  if (!hasKey(prov)) { alert("Add an API key for " + PROVIDERS[prov].name + " first!"); return; }
+  if (STATE.selectedModels.length >= MAX_MODELS) { alert("Max " + MAX_MODELS + " models. Deselect one first."); return; }
+  if (STATE.selectedModels.some(s => s.provider === prov && s.id === id)) return;
+
+  // Add to MODELS if not exists
+  if (!MODELS.some(m => m.provider === prov && m.id === id)) {
+    MODELS.push({ id, name: id.split("/").pop(), provider: prov, speed: "unknown", custom: true });
+  }
+  STATE.selectedModels.push({ id, provider: prov, name: id.split("/").pop() });
+  document.getElementById("customModelId").value = "";
+  renderModelPicker();
+}
+
 // ═══════════════════════════════════════════════════════════════════
-// API CALL
+// API CALLS (multi-provider routing)
 // ═══════════════════════════════════════════════════════════════════
-async function callModel(apiKey, modelId, prompt) {
+async function callModel(providerId, modelId, prompt) {
+  const prov = PROVIDERS[providerId];
+  const apiKey = getProviderKey(providerId);
+  if (!apiKey) throw new Error("No API key for " + prov.name);
+
   const startTime = performance.now();
-  const res = await fetch(BASE + "/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + apiKey },
-    body: JSON.stringify({
-      model: modelId,
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
-      max_tokens: 1000,
-    }),
-  });
-  const endTime = performance.now();
-  const latencyMs = Math.round(endTime - startTime);
-  const data = await res.json();
+  let data;
 
-  if (!res.ok) throw new Error(data.error?.message || data.detail || JSON.stringify(data));
+  if (prov.format === "anthropic") {
+    // ── Anthropic Messages API ──
+    const res = await fetch(prov.base + "/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify({
+        model: modelId,
+        max_tokens: 1024,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+    data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || JSON.stringify(data));
+    const endTime = performance.now();
+    const latencyMs = Math.round(endTime - startTime);
+    const content = extractContent(data.content);
+    const promptTokens = data.usage?.input_tokens || 0;
+    const completionTokens = data.usage?.output_tokens || 0;
+    const totalTokens = promptTokens + completionTokens;
+    const tokensPerSec = completionTokens > 0 ? Math.round((completionTokens / (latencyMs / 1000)) * 10) / 10 : 0;
+    return { responseText: content, metrics: { latencyMs, promptTokens, completionTokens, totalTokens, tokensPerSec } };
 
-  const content = extractContent(data.choices?.[0]?.message?.content);
-  const usage = data.usage || {};
-  const completionTokens = usage.completion_tokens || 0;
-  const tokensPerSec = completionTokens > 0 ? Math.round((completionTokens / (latencyMs / 1000)) * 10) / 10 : 0;
+  } else if (prov.format === "google") {
+    // ── Google Gemini native API ──
+    const url = prov.base + "/models/" + modelId + ":generateContent?key=" + apiKey;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
+      }),
+    });
+    data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || JSON.stringify(data));
+    const endTime = performance.now();
+    const latencyMs = Math.round(endTime - startTime);
+    const content = data.candidates?.[0]?.content?.parts?.map(p => p.text).join("") || "";
+    const promptTokens = data.usageMetadata?.promptTokenCount || 0;
+    const completionTokens = data.usageMetadata?.candidatesTokenCount || 0;
+    const totalTokens = data.usageMetadata?.totalTokenCount || (promptTokens + completionTokens);
+    const tokensPerSec = completionTokens > 0 ? Math.round((completionTokens / (latencyMs / 1000)) * 10) / 10 : 0;
+    return { responseText: content, metrics: { latencyMs, promptTokens, completionTokens, totalTokens, tokensPerSec } };
 
-  return {
-    responseText: content,
-    metrics: {
-      latencyMs,
-      promptTokens: usage.prompt_tokens || 0,
-      completionTokens,
-      totalTokens: usage.total_tokens || 0,
-      tokensPerSec,
-    },
-  };
+  } else {
+    // ── OpenAI-compatible (OpenAI, Groq, OpenRouter, DeepSeek, xAI, Mistral, Euri) ──
+    const headers = { "Content-Type": "application/json", "Authorization": "Bearer " + apiKey };
+    if (providerId === "openrouter") {
+      headers["HTTP-Referer"] = "https://github.com/aiagentwithdhruv/Euron";
+      headers["X-Title"] = "AI Model Arena";
+    }
+    const res = await fetch(prov.base + "/chat/completions", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model: modelId,
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+        max_tokens: 1024,
+      }),
+    });
+    data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || data.detail || JSON.stringify(data));
+    const endTime = performance.now();
+    const latencyMs = Math.round(endTime - startTime);
+    const content = extractContent(data.choices?.[0]?.message?.content);
+    const usage = data.usage || {};
+    const completionTokens = usage.completion_tokens || 0;
+    const tokensPerSec = completionTokens > 0 ? Math.round((completionTokens / (latencyMs / 1000)) * 10) / 10 : 0;
+    return {
+      responseText: content,
+      metrics: { latencyMs, promptTokens: usage.prompt_tokens || 0, completionTokens, totalTokens: usage.total_tokens || 0, tokensPerSec },
+    };
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
 // RUN ARENA
 // ═══════════════════════════════════════════════════════════════════
 async function runArena() {
-  const apiKey = getKey();
-  if (!apiKey) return;
-
-  if (STATE.selectedModels.length < MIN_MODELS) {
-    alert("Select at least " + MIN_MODELS + " models to compare!");
-    return;
-  }
-
+  if (STATE.selectedModels.length < MIN_MODELS) { alert("Select at least " + MIN_MODELS + " models!"); return; }
   const prompt = document.getElementById("arenaPrompt").value.trim();
   if (!prompt) { alert("Enter a prompt!"); return; }
+
+  // Verify keys
+  for (const m of STATE.selectedModels) {
+    if (!hasKey(m.provider)) { alert("No API key for " + PROVIDERS[m.provider].name + ". Open settings to add one."); return; }
+  }
 
   STATE.isRunning = true;
   STATE.currentPrompt = prompt;
   STATE.currentRunId = Date.now().toString(36);
   STATE.results = {};
   STATE.runsThisSession++;
-  updateRunsCounter();
+  document.getElementById("runsCounter").textContent = STATE.runsThisSession + " run" + (STATE.runsThisSession > 1 ? "s" : "");
 
-  const runBtn = document.getElementById("runArena");
-  runBtn.disabled = true;
-  runBtn.innerHTML = '<div class="spinner"></div> Running...';
+  const btn = document.getElementById("runArena");
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Running...';
 
-  // Initialize all as running
-  STATE.selectedModels.forEach(modelId => {
-    const model = MODELS.find(m => m.id === modelId);
-    STATE.results[modelId] = {
-      modelId, modelName: model.name, provider: model.provider,
+  STATE.selectedModels.forEach(m => {
+    const key = modelKey(m);
+    STATE.results[key] = {
+      modelId: m.id, modelName: m.name, provider: m.provider, providerName: PROVIDERS[m.provider].name,
       status: "running", responseText: "", error: null, metrics: null, vote: false,
     };
   });
@@ -541,277 +669,219 @@ async function runArena() {
   renderArenaGrid();
   document.getElementById("resultsSection").style.display = "block";
 
-  // Fire ALL in parallel
-  const promises = STATE.selectedModels.map(async (modelId) => {
+  const promises = STATE.selectedModels.map(async (m) => {
+    const key = modelKey(m);
     try {
-      const result = await callModel(apiKey, modelId, prompt);
-      STATE.results[modelId].status = "done";
-      STATE.results[modelId].responseText = result.responseText;
-      STATE.results[modelId].metrics = result.metrics;
-      STATE.totalTokensUsed += result.metrics.totalTokens;
-      updateTokenDisplay();
+      const result = await callModel(m.provider, m.id, prompt);
+      STATE.results[key].status = "done";
+      STATE.results[key].responseText = result.responseText;
+      STATE.results[key].metrics = result.metrics;
     } catch (err) {
-      STATE.results[modelId].status = "error";
-      STATE.results[modelId].error = err.message;
+      STATE.results[key].status = "error";
+      STATE.results[key].error = err.message;
     }
-    renderSingleCard(modelId);
+    renderSingleCard(key);
   });
 
   await Promise.allSettled(promises);
-
   STATE.isRunning = false;
-  runBtn.disabled = false;
-  runBtn.textContent = "Run Arena";
-
-  highlightBestMetrics();
-  renderRunResultsTable();
-  saveRunToHistory();
+  btn.disabled = false;
+  btn.textContent = "Run Arena";
+  highlightBest();
+  renderRunTable();
+  saveToHistory();
   renderLeaderboard();
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// ARENA GRID RENDERING
+// ARENA GRID
 // ═══════════════════════════════════════════════════════════════════
 function renderArenaGrid() {
   const grid = document.getElementById("arenaGrid");
-  const count = STATE.selectedModels.length;
-  grid.className = "arena-grid cols-" + Math.min(count, 4);
+  const n = STATE.selectedModels.length;
+  grid.className = "arena-grid cols-" + Math.min(n, 4);
   grid.innerHTML = "";
-  STATE.selectedModels.forEach(modelId => {
-    grid.appendChild(createModelCard(modelId));
-  });
+  STATE.selectedModels.forEach(m => grid.appendChild(createCard(modelKey(m))));
 }
 
-function createModelCard(modelId) {
-  const r = STATE.results[modelId];
-  const model = MODELS.find(m => m.id === modelId);
+function createCard(key) {
+  const r = STATE.results[key];
+  const prov = PROVIDERS[r.provider];
   const card = document.createElement("div");
   card.className = "model-card" + (r.vote ? " winner" : "");
-  card.id = "card-" + cssEscape(modelId);
+  card.id = cssId(r);
 
-  let statusIcon = "", statusColor = "#a1a1aa";
-  if (r.status === "running") { statusIcon = '<div class="spinner"></div>'; statusColor = "#a78bfa"; }
-  else if (r.status === "done") { statusIcon = "\u2713"; statusColor = "#22c55e"; }
-  else if (r.status === "error") { statusIcon = "\u2717"; statusColor = "#f87171"; }
+  let statusHtml = "", statusColor = "#a1a1aa";
+  if (r.status === "running") { statusHtml = '<div class="spinner"></div>'; statusColor = "#a78bfa"; }
+  else if (r.status === "done") { statusHtml = "\u2713"; statusColor = "#22c55e"; }
+  else if (r.status === "error") { statusHtml = "\u2717"; statusColor = "#f87171"; }
 
-  let bodyContent = "";
-  if (r.status === "running") bodyContent = `<div class="model-card-body loading"><div class="spinner"></div> Generating...</div>`;
-  else if (r.status === "error") bodyContent = `<div class="model-card-body"><span class="error">${escapeHtml(r.error)}</span></div>`;
-  else if (r.status === "done") bodyContent = `<div class="model-card-body">${escapeHtml(r.responseText)}</div>`;
-  else bodyContent = `<div class="model-card-body loading">Waiting...</div>`;
+  let body = "";
+  if (r.status === "running") body = '<div class="model-card-body loading"><div class="spinner"></div> Generating...</div>';
+  else if (r.status === "error") body = `<div class="model-card-body"><span class="error">${escapeHtml(r.error)}</span></div>`;
+  else if (r.status === "done") body = `<div class="model-card-body">${escapeHtml(r.responseText)}</div>`;
 
   let footer = "";
   if (r.metrics) {
-    footer = `
-      <div class="model-card-footer">
-        <div class="metric"><span class="metric-value" data-m="latency">${r.metrics.latencyMs}ms</span><span class="metric-label">Latency</span></div>
-        <div class="metric"><span class="metric-value" data-m="tps">${r.metrics.tokensPerSec}</span><span class="metric-label">Tok/sec</span></div>
-        <div class="metric"><span class="metric-value" data-m="tokens">${r.metrics.totalTokens}</span><span class="metric-label">Tokens</span></div>
-        <button class="vote-btn ${r.vote ? "voted" : ""}" onclick="voteModel('${modelId}')">${r.vote ? "\u2713 Best" : "Vote Best"}</button>
-      </div>`;
+    footer = `<div class="model-card-footer">
+      <div class="metric"><span class="metric-value" data-m="latency">${r.metrics.latencyMs}ms</span><span class="metric-label">Latency</span></div>
+      <div class="metric"><span class="metric-value" data-m="tps">${r.metrics.tokensPerSec}</span><span class="metric-label">Tok/sec</span></div>
+      <div class="metric"><span class="metric-value" data-m="tokens">${r.metrics.totalTokens}</span><span class="metric-label">Tokens</span></div>
+      <button class="vote-btn ${r.vote ? "voted" : ""}" onclick="voteModel('${key}')">${r.vote ? "\u2713 Best" : "Vote Best"}</button>
+    </div>`;
   }
 
   card.innerHTML = `
     <div class="model-card-header">
-      <div class="model-name"><span class="provider-dot provider-${model.provider}"></span>${model.name}</div>
-      <span class="model-card-status" style="color:${statusColor}">${statusIcon}</span>
-    </div>
-    ${bodyContent}
-    ${footer}`;
-
+      <div class="model-name"><span class="provider-dot ${prov.color}"></span>${r.modelName}<span style="font-size:10px;color:#52525b;font-weight:400;margin-left:4px">${r.providerName}</span></div>
+      <span class="model-card-status" style="color:${statusColor}">${statusHtml}</span>
+    </div>${body}${footer}`;
   return card;
 }
 
-function renderSingleCard(modelId) {
-  const old = document.getElementById("card-" + cssEscape(modelId));
-  if (old) old.replaceWith(createModelCard(modelId));
+function renderSingleCard(key) {
+  const r = STATE.results[key];
+  const old = document.getElementById(cssId(r));
+  if (old) old.replaceWith(createCard(key));
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// BEST METRIC HIGHLIGHTING
-// ═══════════════════════════════════════════════════════════════════
-function highlightBestMetrics() {
+function highlightBest() {
   const done = Object.values(STATE.results).filter(r => r.status === "done" && r.metrics);
   if (done.length < 2) return;
-
-  const bestLatency = Math.min(...done.map(r => r.metrics.latencyMs));
+  const bestLat = Math.min(...done.map(r => r.metrics.latencyMs));
   const bestTps = Math.max(...done.map(r => r.metrics.tokensPerSec));
-  const bestTokens = Math.min(...done.map(r => r.metrics.totalTokens));
-
   done.forEach(r => {
-    const card = document.getElementById("card-" + cssEscape(r.modelId));
+    const card = document.getElementById(cssId(r));
     if (!card) return;
-    if (r.metrics.latencyMs === bestLatency) card.querySelector('[data-m="latency"]')?.classList.add("best");
+    if (r.metrics.latencyMs === bestLat) card.querySelector('[data-m="latency"]')?.classList.add("best");
     if (r.metrics.tokensPerSec === bestTps) card.querySelector('[data-m="tps"]')?.classList.add("best");
-    if (r.metrics.totalTokens === bestTokens) card.querySelector('[data-m="tokens"]')?.classList.add("best");
   });
 }
 
 // ═══════════════════════════════════════════════════════════════════
 // VOTING
 // ═══════════════════════════════════════════════════════════════════
-function voteModel(modelId) {
+function voteModel(key) {
   Object.values(STATE.results).forEach(r => r.vote = false);
-  STATE.results[modelId].vote = true;
-  STATE.selectedModels.forEach(id => renderSingleCard(id));
-  highlightBestMetrics();
-  updateRunInHistory(STATE.currentRunId, modelId);
-  renderRunResultsTable();
+  if (STATE.results[key]) STATE.results[key].vote = true;
+  STATE.selectedModels.forEach(m => renderSingleCard(modelKey(m)));
+  highlightBest();
+  renderRunTable();
+  updateVoteInHistory(STATE.currentRunId, key);
   renderLeaderboard();
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// RESULTS TABLE (This Run)
+// RESULTS TABLE
 // ═══════════════════════════════════════════════════════════════════
-function renderRunResultsTable() {
-  const container = document.getElementById("runResultsTable");
-  const done = Object.values(STATE.results).filter(r => r.status === "done" && r.metrics);
-  if (done.length === 0) { container.innerHTML = ""; return; }
+function renderRunTable() {
+  const el = document.getElementById("runResultsTable");
+  const done = Object.entries(STATE.results).filter(([, r]) => r.status === "done" && r.metrics).map(([k, r]) => ({ ...r, key: k }));
+  if (!done.length) { el.innerHTML = ""; return; }
 
-  // Sort
   const sorted = [...done].sort((a, b) => {
     let va, vb;
     switch (STATE.sortCol) {
-      case "model": va = a.modelName; vb = b.modelName; return STATE.sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
-      case "provider": va = a.provider; vb = b.provider; return STATE.sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+      case "model": return STATE.sortAsc ? a.modelName.localeCompare(b.modelName) : b.modelName.localeCompare(a.modelName);
+      case "provider": return STATE.sortAsc ? a.provider.localeCompare(b.provider) : b.provider.localeCompare(a.provider);
       case "latency": va = a.metrics.latencyMs; vb = b.metrics.latencyMs; break;
       case "tps": va = a.metrics.tokensPerSec; vb = b.metrics.tokensPerSec; break;
-      case "prompt": va = a.metrics.promptTokens; vb = b.metrics.promptTokens; break;
-      case "completion": va = a.metrics.completionTokens; vb = b.metrics.completionTokens; break;
       case "total": va = a.metrics.totalTokens; vb = b.metrics.totalTokens; break;
       default: va = a.metrics.latencyMs; vb = b.metrics.latencyMs;
     }
     return STATE.sortAsc ? va - vb : vb - va;
   });
 
-  // Find bests
-  const bestLatency = Math.min(...done.map(r => r.metrics.latencyMs));
+  const bestLat = Math.min(...done.map(r => r.metrics.latencyMs));
   const bestTps = Math.max(...done.map(r => r.metrics.tokensPerSec));
-
-  const cols = [
-    { key: "rank", label: "#" },
-    { key: "model", label: "Model" },
-    { key: "provider", label: "Provider" },
-    { key: "latency", label: "Latency" },
-    { key: "tps", label: "Tok/sec" },
-    { key: "prompt", label: "Prompt" },
-    { key: "completion", label: "Completion" },
-    { key: "total", label: "Total" },
-    { key: "vote", label: "Vote" },
-  ];
-
   const arrow = STATE.sortAsc ? " \u2191" : " \u2193";
+  const cols = ["#", "Model", "Provider", "Latency", "Tok/sec", "Prompt", "Completion", "Total", "Vote"];
+  const sortKeys = ["rank", "model", "provider", "latency", "tps", "prompt", "completion", "total", "vote"];
 
-  container.innerHTML = `
-    <table class="results-table">
-      <thead><tr>${cols.map(c =>
-        `<th data-sort="${c.key}" class="${STATE.sortCol === c.key ? "sorted" : ""}">${c.label}${STATE.sortCol === c.key ? arrow : ""}</th>`
-      ).join("")}</tr></thead>
-      <tbody>${sorted.map((r, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td><strong>${r.modelName}</strong></td>
-          <td><span class="provider-dot provider-${r.provider}" style="display:inline-block;vertical-align:middle;margin-right:6px"></span>${capitalize(r.provider)}</td>
-          <td class="${r.metrics.latencyMs === bestLatency ? "best-cell" : ""}">${r.metrics.latencyMs}ms</td>
-          <td class="${r.metrics.tokensPerSec === bestTps ? "best-cell" : ""}">${r.metrics.tokensPerSec}</td>
-          <td>${r.metrics.promptTokens}</td>
-          <td>${r.metrics.completionTokens}</td>
-          <td>${r.metrics.totalTokens}</td>
-          <td><button class="vote-btn ${r.vote ? "voted" : ""}" onclick="voteModel('${r.modelId}')">${r.vote ? "\u2713 Best" : "Vote"}</button></td>
-        </tr>
-      `).join("")}</tbody>
-    </table>`;
+  el.innerHTML = `<table class="results-table"><thead><tr>${cols.map((c, i) =>
+    `<th data-sort="${sortKeys[i]}" class="${STATE.sortCol === sortKeys[i] ? "sorted" : ""}">${c}${STATE.sortCol === sortKeys[i] ? arrow : ""}</th>`
+  ).join("")}</tr></thead><tbody>${sorted.map((r, i) => `<tr>
+    <td>${i + 1}</td>
+    <td><strong>${r.modelName}</strong></td>
+    <td><span class="provider-dot ${PROVIDERS[r.provider].color}" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>${PROVIDERS[r.provider].name}</td>
+    <td class="${r.metrics.latencyMs === bestLat ? "best-cell" : ""}">${r.metrics.latencyMs}ms</td>
+    <td class="${r.metrics.tokensPerSec === bestTps ? "best-cell" : ""}">${r.metrics.tokensPerSec}</td>
+    <td>${r.metrics.promptTokens}</td>
+    <td>${r.metrics.completionTokens}</td>
+    <td>${r.metrics.totalTokens}</td>
+    <td><button class="vote-btn ${r.vote ? "voted" : ""}" onclick="voteModel('${r.key}')">${r.vote ? "\u2713" : "Vote"}</button></td>
+  </tr>`).join("")}</tbody></table>`;
 
-  container.querySelectorAll("th[data-sort]").forEach(th => {
+  el.querySelectorAll("th[data-sort]").forEach(th => {
     th.addEventListener("click", () => {
-      const col = th.dataset.sort;
-      if (col === "rank" || col === "vote") return;
-      if (STATE.sortCol === col) STATE.sortAsc = !STATE.sortAsc;
-      else { STATE.sortCol = col; STATE.sortAsc = true; }
-      renderRunResultsTable();
+      const c = th.dataset.sort;
+      if (c === "rank" || c === "vote") return;
+      STATE.sortAsc = STATE.sortCol === c ? !STATE.sortAsc : true;
+      STATE.sortCol = c;
+      renderRunTable();
     });
   });
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// HISTORY (localStorage)
+// HISTORY
 // ═══════════════════════════════════════════════════════════════════
-function loadHistory() {
-  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); }
-  catch { return []; }
-}
+function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); } catch { return []; } }
 
-function saveRunToHistory() {
-  const history = loadHistory();
-  const entry = {
-    runId: STATE.currentRunId,
-    timestamp: Date.now(),
-    category: STATE.currentCategory,
-    prompt: STATE.currentPrompt,
-    models: [...STATE.selectedModels],
-    results: {},
-  };
-  Object.entries(STATE.results).forEach(([modelId, r]) => {
-    entry.results[modelId] = {
-      status: r.status,
-      latencyMs: r.metrics?.latencyMs || null,
-      tokensPerSec: r.metrics?.tokensPerSec || null,
-      promptTokens: r.metrics?.promptTokens || null,
-      completionTokens: r.metrics?.completionTokens || null,
-      totalTokens: r.metrics?.totalTokens || null,
-      responsePreview: (r.responseText || "").substring(0, 200),
-      vote: r.vote,
+function saveToHistory() {
+  const h = loadHistory();
+  const entry = { runId: STATE.currentRunId, timestamp: Date.now(), category: STATE.currentCategory, prompt: STATE.currentPrompt, results: {} };
+  Object.entries(STATE.results).forEach(([key, r]) => {
+    entry.results[key] = {
+      modelId: r.modelId, modelName: r.modelName, provider: r.provider, providerName: r.providerName,
+      status: r.status, latencyMs: r.metrics?.latencyMs, tokensPerSec: r.metrics?.tokensPerSec,
+      promptTokens: r.metrics?.promptTokens, completionTokens: r.metrics?.completionTokens,
+      totalTokens: r.metrics?.totalTokens, responsePreview: (r.responseText || "").substring(0, 200), vote: r.vote,
     };
   });
-  history.unshift(entry);
-  if (history.length > MAX_HISTORY) history.length = MAX_HISTORY;
-  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch {}
-  renderHistoryList();
+  h.unshift(entry);
+  if (h.length > MAX_HISTORY) h.length = MAX_HISTORY;
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); } catch {}
+  renderHistory();
 }
 
-function updateRunInHistory(runId, votedModelId) {
-  const history = loadHistory();
-  const run = history.find(r => r.runId === runId);
+function updateVoteInHistory(runId, votedKey) {
+  const h = loadHistory();
+  const run = h.find(r => r.runId === runId);
   if (!run) return;
   Object.values(run.results).forEach(r => r.vote = false);
-  if (run.results[votedModelId]) run.results[votedModelId].vote = true;
-  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch {}
+  if (run.results[votedKey]) run.results[votedKey].vote = true;
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); } catch {}
 }
 
-function renderHistoryList() {
-  const container = document.getElementById("historyList");
-  const history = loadHistory();
-  if (history.length === 0) {
-    container.innerHTML = '<div class="leaderboard-empty">No arena runs yet. Run your first comparison above!</div>';
-    return;
-  }
-  container.innerHTML = history.map(run => {
-    const winner = Object.entries(run.results).find(([, r]) => r.vote)?.[0];
-    const winnerModel = winner ? MODELS.find(m => m.id === winner)?.name : null;
-    const catInfo = BENCHMARKS[run.category];
-    return `
-      <div class="history-entry" onclick="this.classList.toggle('open')">
-        <div class="history-header">
-          <span class="history-time">${timeAgo(run.timestamp)}</span>
-          <span class="history-category">${catInfo?.icon || ""} ${catInfo?.name || run.category}</span>
-          <span style="color:#a1a1aa;font-size:12px">${run.models.length} models</span>
-          ${winnerModel ? `<span class="history-winner-badge">\u2713 ${winnerModel}</span>` : ""}
-        </div>
-        <div class="history-body">
-          <div style="margin-bottom:8px;color:#71717a;font-style:italic">"${escapeHtml(run.prompt.substring(0, 120))}${run.prompt.length > 120 ? "..." : ""}"</div>
-          ${Object.entries(run.results).filter(([,r]) => r.status === "done").map(([id, r]) => {
-            const m = MODELS.find(m => m.id === id);
-            return `<div style="display:flex;gap:16px;padding:4px 0;align-items:center">
-              <span class="provider-dot provider-${m?.provider || "google"}" style="flex-shrink:0"></span>
-              <span style="width:140px;font-weight:500">${m?.name || id}</span>
-              <span style="color:#71717a">${r.latencyMs}ms</span>
-              <span style="color:#71717a">${r.tokensPerSec} tok/s</span>
-              <span style="color:#71717a">${r.totalTokens} tokens</span>
-              ${r.vote ? '<span style="color:#22c55e">\u2713 Best</span>' : ""}
-            </div>`;
-          }).join("")}
-        </div>
-      </div>`;
+function renderHistory() {
+  const el = document.getElementById("historyList");
+  const h = loadHistory();
+  if (!h.length) { el.innerHTML = '<div class="leaderboard-empty">No arena runs yet.</div>'; return; }
+  el.innerHTML = h.map(run => {
+    const winner = Object.entries(run.results).find(([, r]) => r.vote);
+    const cat = BENCHMARKS[run.category];
+    return `<div class="history-entry" onclick="this.classList.toggle('open')">
+      <div class="history-header">
+        <span class="history-time">${timeAgo(run.timestamp)}</span>
+        <span class="history-category">${cat?.icon || ""} ${cat?.name || run.category}</span>
+        <span style="color:#71717a;font-size:12px">${Object.keys(run.results).length} models</span>
+        ${winner ? `<span class="history-winner-badge">\u2713 ${winner[1].modelName} (${winner[1].providerName})</span>` : ""}
+      </div>
+      <div class="history-body">
+        <div style="margin-bottom:8px;color:#71717a;font-style:italic">"${escapeHtml(run.prompt.substring(0, 150))}${run.prompt.length > 150 ? "..." : ""}"</div>
+        ${Object.entries(run.results).filter(([,r]) => r.status === "done").map(([, r]) =>
+          `<div style="display:flex;gap:12px;padding:3px 0;align-items:center;font-size:12px">
+            <span class="provider-dot ${PROVIDERS[r.provider]?.color || ""}" style="display:inline-block;flex-shrink:0"></span>
+            <span style="width:130px;font-weight:500">${r.modelName}</span>
+            <span style="color:#71717a;width:50px">${r.providerName}</span>
+            <span style="color:#71717a">${r.latencyMs}ms</span>
+            <span style="color:#71717a">${r.tokensPerSec} tok/s</span>
+            ${r.vote ? '<span style="color:#22c55e">\u2713</span>' : ""}
+          </div>`
+        ).join("")}
+      </div>
+    </div>`;
   }).join("");
 }
 
@@ -819,65 +889,46 @@ function renderHistoryList() {
 // LEADERBOARD
 // ═══════════════════════════════════════════════════════════════════
 function renderLeaderboard() {
-  const container = document.getElementById("leaderboardTable");
-  const history = loadHistory();
-  if (history.length === 0) {
-    container.innerHTML = '<div class="leaderboard-empty">Run some arena comparisons to build the leaderboard!</div>';
-    return;
-  }
+  const el = document.getElementById("leaderboardTable");
+  const h = loadHistory();
+  if (!h.length) { el.innerHTML = '<div class="leaderboard-empty">Run comparisons to build the leaderboard!</div>'; return; }
 
   const stats = {};
-  history.forEach(run => {
-    Object.entries(run.results).forEach(([modelId, r]) => {
+  h.forEach(run => {
+    Object.entries(run.results).forEach(([key, r]) => {
       if (r.status !== "done") return;
-      if (!stats[modelId]) {
-        const model = MODELS.find(m => m.id === modelId);
-        stats[modelId] = { modelId, modelName: model?.name || modelId, provider: model?.provider || "unknown", runs: 0, wins: 0, latencies: [], tpsList: [] };
-      }
-      stats[modelId].runs++;
-      if (r.vote) stats[modelId].wins++;
-      if (r.latencyMs) stats[modelId].latencies.push(r.latencyMs);
-      if (r.tokensPerSec) stats[modelId].tpsList.push(r.tokensPerSec);
+      if (!stats[key]) stats[key] = { key, modelName: r.modelName, provider: r.provider, providerName: r.providerName, runs: 0, wins: 0, lats: [], tps: [] };
+      stats[key].runs++;
+      if (r.vote) stats[key].wins++;
+      if (r.latencyMs) stats[key].lats.push(r.latencyMs);
+      if (r.tokensPerSec) stats[key].tps.push(r.tokensPerSec);
     });
   });
 
-  const leaderboard = Object.values(stats).map(s => {
-    s.avgLatency = s.latencies.length ? Math.round(s.latencies.reduce((a, b) => a + b, 0) / s.latencies.length) : 0;
-    s.avgTps = s.tpsList.length ? Math.round(s.tpsList.reduce((a, b) => a + b, 0) / s.tpsList.length * 10) / 10 : 0;
+  const lb = Object.values(stats).map(s => {
+    s.avgLat = s.lats.length ? Math.round(s.lats.reduce((a, b) => a + b, 0) / s.lats.length) : 0;
+    s.avgTps = s.tps.length ? Math.round(s.tps.reduce((a, b) => a + b, 0) / s.tps.length * 10) / 10 : 0;
     s.winRate = s.runs > 0 ? Math.round((s.wins / s.runs) * 100) : 0;
     return s;
-  }).sort((a, b) => b.winRate - a.winRate || a.avgLatency - b.avgLatency);
+  }).sort((a, b) => b.winRate - a.winRate || a.avgLat - b.avgLat);
 
-  const maxWinRate = Math.max(...leaderboard.map(s => s.winRate), 1);
-
-  container.innerHTML = `
-    <table class="results-table">
-      <thead><tr>
-        <th>#</th><th>Model</th><th>Provider</th><th>Win Rate</th><th>Avg Latency</th><th>Avg Tok/sec</th><th>Runs</th><th>Wins</th>
-      </tr></thead>
-      <tbody>${leaderboard.map((s, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td><strong>${s.modelName}</strong></td>
-          <td><span class="provider-dot provider-${s.provider}" style="display:inline-block;vertical-align:middle;margin-right:6px"></span>${capitalize(s.provider)}</td>
-          <td>
-            <div class="lb-winrate">
-              <span style="width:36px;text-align:right;font-weight:600;${s.winRate > 0 ? "color:#22c55e" : ""}">${s.winRate}%</span>
-              <div class="lb-bar"><div class="lb-bar-fill" style="width:${(s.winRate / maxWinRate) * 100}%"></div></div>
-            </div>
-          </td>
-          <td>${s.avgLatency}ms</td>
-          <td>${s.avgTps}</td>
-          <td>${s.runs}</td>
-          <td>${s.wins}</td>
-        </tr>
-      `).join("")}</tbody>
-    </table>`;
+  const maxWr = Math.max(...lb.map(s => s.winRate), 1);
+  el.innerHTML = `<table class="results-table"><thead><tr><th>#</th><th>Model</th><th>Provider</th><th>Win Rate</th><th>Avg Latency</th><th>Avg Tok/sec</th><th>Runs</th><th>Wins</th></tr></thead>
+  <tbody>${lb.map((s, i) => `<tr>
+    <td>${i + 1}</td><td><strong>${s.modelName}</strong></td>
+    <td><span class="provider-dot ${PROVIDERS[s.provider]?.color || ""}" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>${s.providerName}</td>
+    <td><div class="lb-winrate"><span style="width:36px;text-align:right;font-weight:600;${s.winRate > 0 ? "color:#22c55e" : ""}">${s.winRate}%</span><div class="lb-bar"><div class="lb-bar-fill" style="width:${(s.winRate / maxWr) * 100}%"></div></div></div></td>
+    <td>${s.avgLat}ms</td><td>${s.avgTps}</td><td>${s.runs}</td><td>${s.wins}</td>
+  </tr>`).join("")}</tbody></table>`;
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// RESULTS TABS
+// EVENT LISTENERS
 // ═══════════════════════════════════════════════════════════════════
+document.getElementById("runArena").addEventListener("click", runArena);
+document.getElementById("shufflePrompt").addEventListener("click", shufflePrompt);
+document.getElementById("arenaPrompt").addEventListener("keydown", e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) runArena(); });
+
 document.querySelectorAll(".results-tab").forEach(tab => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".results-tab").forEach(t => t.classList.remove("active"));
@@ -887,58 +938,34 @@ document.querySelectorAll(".results-tab").forEach(tab => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════════
-// EVENT LISTENERS
-// ═══════════════════════════════════════════════════════════════════
-document.getElementById("runArena").addEventListener("click", runArena);
-document.getElementById("shufflePrompt").addEventListener("click", shufflePrompt);
-
-document.getElementById("arenaPrompt").addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) runArena();
-});
-
-// API Key persistence
-const apiKeyInput = document.getElementById("apiKey");
-const apiKeyToggle = document.getElementById("apiKeyToggle");
-apiKeyInput.value = localStorage.getItem("euri_api_key") || "";
-apiKeyInput.addEventListener("input", () => localStorage.setItem("euri_api_key", apiKeyInput.value));
-apiKeyToggle.addEventListener("click", () => {
-  const isPassword = apiKeyInput.type === "password";
-  apiKeyInput.type = isPassword ? "text" : "password";
-  apiKeyToggle.innerHTML = isPassword ? "&#128064;" : "&#128065;";
-  apiKeyToggle.title = isPassword ? "Hide key" : "Show key";
-});
-
-// History actions
 document.getElementById("clearHistory").addEventListener("click", () => {
-  if (!confirm("Clear all arena history? This cannot be undone.")) return;
+  if (!confirm("Clear all arena history?")) return;
   localStorage.removeItem(HISTORY_KEY);
-  renderHistoryList();
-  renderLeaderboard();
+  renderHistory(); renderLeaderboard();
 });
-
 document.getElementById("exportHistory").addEventListener("click", () => {
-  const history = loadHistory();
-  const blob = new Blob([JSON.stringify(history, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = "euri-arena-history.json"; a.click();
-  URL.revokeObjectURL(url);
+  const blob = new Blob([JSON.stringify(loadHistory(), null, 2)], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "arena-history.json"; a.click();
 });
 
 // ═══════════════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════════════
+renderSettings();
 renderCategories();
 renderModelPicker();
-loadPromptFromCategory(STATE.currentCategory);
-renderHistoryList();
+loadPrompt(STATE.currentCategory);
+renderHistory();
 renderLeaderboard();
 
-// Show results section if there's history
-if (loadHistory().length > 0) {
-  document.getElementById("resultsSection").style.display = "block";
+// Auto-select some defaults if keys are available
+if (hasKey("euri")) {
+  STATE.selectedModels.push({ id: "gemini-2.5-flash", provider: "euri", name: "Gemini 2.5 Flash" });
+  STATE.selectedModels.push({ id: "gpt-4.1-nano", provider: "euri", name: "GPT-4.1 Nano" });
+  STATE.selectedModels.push({ id: "llama-3.1-8b-instant", provider: "euri", name: "Llama 3.1 8B" });
+  renderModelPicker();
 }
+if (loadHistory().length > 0) document.getElementById("resultsSection").style.display = "block";
 </script>
 </body>
 </html>
