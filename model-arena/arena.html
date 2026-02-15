@@ -406,7 +406,7 @@ function escapeHtml(text) {
 }
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 function modelKey(m) { return m.provider + "::" + m.id; }
-function cssId(m) { return "card-" + (m.provider + "_" + m.id).replace(/[\/\.\:]/g, "_"); }
+function cssId(m) { return "card-" + (m.provider + "_" + (m.modelId || m.id)).replace(/[\/\.\:]/g, "_"); }
 function timeAgo(ts) {
   const d = Date.now() - ts;
   if (d < 60000) return "just now";
