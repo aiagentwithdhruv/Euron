@@ -4,6 +4,20 @@
 
 > Sign up free at [euron.one/euri](https://euron.one/euri)
 
+---
+
+### AI Model Arena — Compare 50+ Models Side-by-Side
+
+**[Try it Live](https://aiagentwithdhruv.github.io/Euron/model-arena/arena.html)** — pit Claude vs GPT vs Gemini vs Llama in one click. 9 providers, parallel benchmarks, voting, leaderboard. Zero setup.
+
+Or run locally:
+```bash
+git clone https://github.com/aiagentwithdhruv/Euron.git
+open Euron/model-arena/arena.html
+```
+
+---
+
 ## Quick Start
 
 ```bash
@@ -39,7 +53,7 @@ response = client.chat.completions.create(model="gemini-2.5-flash", messages=[{"
 | File | Description |
 |------|-------------|
 | `test.html` | Interactive API tester — open in browser, test all 3 endpoints |
-| `model-arena/arena.html` | **Model Arena** — compare 2-4 models side-by-side with benchmarks and leaderboard |
+| `model-arena/arena.html` | **[Model Arena (Live)](https://aiagentwithdhruv.github.io/Euron/model-arena/arena.html)** — compare 2-4 models side-by-side across 9 providers |
 | `euri-client.ts` | TypeScript client for Next.js / Node.js projects |
 | `euri-models.ts` | All 24 model definitions with types and metadata |
 | `examples/basic-chat.ts` | TypeScript usage examples (chat, embeddings, images) |
