@@ -141,6 +141,20 @@
     .history-entry.open .history-body { display: block; }
     .history-actions { display: flex; gap: 8px; margin-bottom: 12px; }
 
+    /* ── Blind Mode ─────────────────────────────── */
+    .blind-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #a1a1aa; cursor: pointer; user-select: none; }
+    .blind-switch { width: 36px; height: 20px; background: #3f3f46; border-radius: 10px; position: relative; transition: background 0.2s; flex-shrink: 0; }
+    .blind-switch::after { content: ""; position: absolute; width: 16px; height: 16px; background: #71717a; border-radius: 50%; top: 2px; left: 2px; transition: all 0.2s; }
+    .blind-toggle.active .blind-switch { background: #7c3aed; }
+    .blind-toggle.active .blind-switch::after { left: 18px; background: #fff; }
+    .blind-label { font-weight: 700; color: #a78bfa; font-size: 14px; letter-spacing: 0.5px; }
+    .reveal-btn { background: linear-gradient(135deg, #7c3aed, #6366f1); color: white; border: none; padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; animation: pulse-reveal 1.5s ease-in-out infinite; }
+    .reveal-btn:hover { transform: scale(1.05); }
+    @keyframes pulse-reveal { 0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.4); } 50% { box-shadow: 0 0 0 8px rgba(124,58,237,0); } }
+    .reveal-bar { display: none; padding: 12px 32px; background: #1a1b2e; border-bottom: 1px solid #27272a; text-align: center; }
+    .reveal-bar.show { display: flex; align-items: center; justify-content: center; gap: 16px; }
+    .reveal-bar span { font-size: 13px; color: #a1a1aa; }
+
     .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #52525b; border-top-color: #a78bfa; border-radius: 50%; animation: spin 0.6s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -187,6 +201,10 @@
     <div class="prompt-controls">
       <button class="btn btn-primary" id="runArena">Run Arena</button>
       <button class="btn btn-secondary btn-sm" id="shufflePrompt">Shuffle</button>
+      <label class="blind-toggle" id="blindToggle" title="Hide model names until you vote — unbiased quality comparison">
+        <div class="blind-switch"></div>
+        <span>Blind</span>
+      </label>
     </div>
   </div>
 </div>
@@ -210,6 +228,12 @@
     <input type="text" id="customModelId" placeholder="Type any model ID (e.g. google/gemini-2.5-pro)" />
     <button class="btn btn-secondary btn-sm" onclick="addCustomModel()">+ Add</button>
   </div>
+</div>
+
+<!-- ═══ REVEAL BAR (Blind Mode) ═══ -->
+<div class="reveal-bar" id="revealBar">
+  <span>Blind mode active — vote on quality first, then reveal models</span>
+  <button class="reveal-btn" id="revealBtn" onclick="revealModels()">Reveal Models</button>
 </div>
 
 <!-- ═══ ARENA GRID ═══ -->
@@ -372,6 +396,8 @@ const MIN_MODELS = 2;
 const HISTORY_KEY = "arena_history";
 const MAX_HISTORY = 100;
 
+const BLIND_LABELS = ["Model A", "Model B", "Model C", "Model D"];
+
 const STATE = {
   selectedModels: [], // [{id, provider, name}]
   currentCategory: "quick_chat",
@@ -383,6 +409,8 @@ const STATE = {
   promptIndex: {},
   sortCol: "latency",
   sortAsc: true,
+  blindMode: false,
+  blindRevealed: false,
 };
 Object.keys(BENCHMARKS).forEach(k => STATE.promptIndex[k] = 0);
 
@@ -655,6 +683,8 @@ async function runArena() {
   STATE.currentRunId = Date.now().toString(36);
   STATE.results = {};
   STATE.runsThisSession++;
+  STATE.blindRevealed = false;
+  hideRevealBar();
   document.getElementById("runsCounter").textContent = STATE.runsThisSession + " run" + (STATE.runsThisSession > 1 ? "s" : "");
 
   const btn = document.getElementById("runArena");
@@ -690,7 +720,11 @@ async function runArena() {
   STATE.isRunning = false;
   btn.disabled = false;
   btn.textContent = "Run Arena";
-  highlightBest();
+  if (STATE.blindMode && !STATE.blindRevealed) {
+    showRevealBar();
+  } else {
+    highlightBest();
+  }
   renderRunTable();
   saveToHistory();
   renderLeaderboard();
@@ -707,9 +741,17 @@ function renderArenaGrid() {
   STATE.selectedModels.forEach(m => grid.appendChild(createCard(modelKey(m))));
 }
 
+function getBlindLabel(key) {
+  const idx = STATE.selectedModels.findIndex(m => modelKey(m) === key);
+  return BLIND_LABELS[idx] || "Model ?";
+}
+
+function isBlinded() { return STATE.blindMode && !STATE.blindRevealed; }
+
 function createCard(key) {
   const r = STATE.results[key];
   const prov = PROVIDERS[r.provider];
+  const blind = isBlinded();
   const card = document.createElement("div");
   card.className = "model-card" + (r.vote ? " winner" : "");
   card.id = cssId(r);
@@ -719,24 +761,34 @@ function createCard(key) {
   else if (r.status === "done") { statusHtml = "\u2713"; statusColor = "#22c55e"; }
   else if (r.status === "error") { statusHtml = "\u2717"; statusColor = "#f87171"; }
 
+  // Header: blind mode hides name + provider
+  const displayName = blind ? `<span class="blind-label">${getBlindLabel(key)}</span>` : `${r.modelName}<span style="font-size:10px;color:#52525b;font-weight:400;margin-left:4px">${r.providerName}</span>`;
+  const dotHtml = blind ? "" : `<span class="provider-dot ${prov.color}"></span>`;
+
   let body = "";
   if (r.status === "running") body = '<div class="model-card-body loading"><div class="spinner"></div> Generating...</div>';
-  else if (r.status === "error") body = `<div class="model-card-body"><span class="error">${escapeHtml(r.error)}</span></div>`;
+  else if (r.status === "error") body = `<div class="model-card-body"><span class="error">${blind ? "Error occurred" : escapeHtml(r.error)}</span></div>`;
   else if (r.status === "done") body = `<div class="model-card-body">${escapeHtml(r.responseText)}</div>`;
 
   let footer = "";
   if (r.metrics) {
+    // In blind mode, hide speed metrics (they reveal model identity) — only show after reveal
+    const metricsHtml = blind
+      ? `<div class="metric"><span class="metric-value">???</span><span class="metric-label">Latency</span></div>
+         <div class="metric"><span class="metric-value">???</span><span class="metric-label">Tok/sec</span></div>
+         <div class="metric"><span class="metric-value">???</span><span class="metric-label">Tokens</span></div>`
+      : `<div class="metric"><span class="metric-value" data-m="latency">${r.metrics.latencyMs}ms</span><span class="metric-label">Latency</span></div>
+         <div class="metric"><span class="metric-value" data-m="tps">${r.metrics.tokensPerSec}</span><span class="metric-label">Tok/sec</span></div>
+         <div class="metric"><span class="metric-value" data-m="tokens">${r.metrics.totalTokens}</span><span class="metric-label">Tokens</span></div>`;
     footer = `<div class="model-card-footer">
-      <div class="metric"><span class="metric-value" data-m="latency">${r.metrics.latencyMs}ms</span><span class="metric-label">Latency</span></div>
-      <div class="metric"><span class="metric-value" data-m="tps">${r.metrics.tokensPerSec}</span><span class="metric-label">Tok/sec</span></div>
-      <div class="metric"><span class="metric-value" data-m="tokens">${r.metrics.totalTokens}</span><span class="metric-label">Tokens</span></div>
+      ${metricsHtml}
       <button class="vote-btn ${r.vote ? "voted" : ""}" onclick="voteModel('${key}')">${r.vote ? "\u2713 Best" : "Vote Best"}</button>
     </div>`;
   }
 
   card.innerHTML = `
     <div class="model-card-header">
-      <div class="model-name"><span class="provider-dot ${prov.color}"></span>${r.modelName}<span style="font-size:10px;color:#52525b;font-weight:400;margin-left:4px">${r.providerName}</span></div>
+      <div class="model-name">${dotHtml}${displayName}</div>
       <span class="model-card-status" style="color:${statusColor}">${statusHtml}</span>
     </div>${body}${footer}`;
   return card;
@@ -762,11 +814,45 @@ function highlightBest() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// BLIND MODE
+// ═══════════════════════════════════════════════════════════════════
+document.getElementById("blindToggle").addEventListener("click", () => {
+  STATE.blindMode = !STATE.blindMode;
+  document.getElementById("blindToggle").classList.toggle("active", STATE.blindMode);
+});
+
+function revealModels() {
+  STATE.blindRevealed = true;
+  document.getElementById("revealBar").classList.remove("show");
+  // Re-render all cards with real names + metrics
+  STATE.selectedModels.forEach(m => renderSingleCard(modelKey(m)));
+  highlightBest();
+  renderRunTable();
+}
+
+function showRevealBar() {
+  if (STATE.blindMode) {
+    document.getElementById("revealBar").classList.add("show");
+  }
+}
+
+function hideRevealBar() {
+  document.getElementById("revealBar").classList.remove("show");
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // VOTING
 // ═══════════════════════════════════════════════════════════════════
 function voteModel(key) {
   Object.values(STATE.results).forEach(r => r.vote = false);
   if (STATE.results[key]) STATE.results[key].vote = true;
+
+  // In blind mode: auto-reveal after voting
+  if (STATE.blindMode && !STATE.blindRevealed) {
+    STATE.blindRevealed = true;
+    document.getElementById("revealBar").classList.remove("show");
+  }
+
   STATE.selectedModels.forEach(m => renderSingleCard(modelKey(m)));
   highlightBest();
   renderRunTable();
@@ -779,6 +865,8 @@ function voteModel(key) {
 // ═══════════════════════════════════════════════════════════════════
 function renderRunTable() {
   const el = document.getElementById("runResultsTable");
+  // Hide results table in blind mode until revealed (would spoil model names + metrics)
+  if (isBlinded()) { el.innerHTML = '<div class="leaderboard-empty">Vote on a model or reveal to see the results table</div>'; return; }
   const done = Object.entries(STATE.results).filter(([, r]) => r.status === "done" && r.metrics).map(([k, r]) => ({ ...r, key: k }));
   if (!done.length) { el.innerHTML = ""; return; }
 
