@@ -19,6 +19,8 @@
     /* ── Settings Panel ─────────────────────────── */
     .settings-toggle { background: #27272a; border: 1px solid #3f3f46; color: #a1a1aa; padding: 6px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
     .settings-toggle:hover { background: #3f3f46; color: #e4e4e7; }
+    .settings-toggle.needs-keys { background: #7c3aed30; border-color: #7c3aed; color: #c4b5fd; animation: pulse-keys 2s ease-in-out infinite; }
+    @keyframes pulse-keys { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
     .settings-panel { display: none; background: #18181b; border-bottom: 1px solid #27272a; padding: 16px 32px; }
     .settings-panel.open { display: block; }
     .settings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
@@ -433,6 +435,7 @@ function renderSettings() {
       localStorage.setItem(PROVIDERS[prov].keyName, inp.value.trim());
       inp.closest(".key-field").querySelector(".key-status").className = "key-status" + (inp.value.trim() ? " active" : "");
       renderModelPicker();
+      if (typeof updateSettingsButton === "function") updateSettingsButton();
     });
   });
 }
@@ -957,6 +960,22 @@ renderModelPicker();
 loadPrompt(STATE.currentCategory);
 renderHistory();
 renderLeaderboard();
+
+// Auto-open settings panel if no keys are saved + highlight button
+const anyKeysSaved = Object.keys(PROVIDERS).some(p => hasKey(p));
+if (!anyKeysSaved) {
+  document.getElementById("settingsPanel").classList.add("open");
+  document.getElementById("settingsToggle").classList.add("needs-keys");
+}
+
+// Update button state when keys change
+function updateSettingsButton() {
+  const hasAny = Object.keys(PROVIDERS).some(p => hasKey(p));
+  const btn = document.getElementById("settingsToggle");
+  btn.classList.toggle("needs-keys", !hasAny);
+  const count = Object.keys(PROVIDERS).filter(p => hasKey(p)).length;
+  btn.innerHTML = `<span>&#9881;</span> API Keys ${count > 0 ? "(" + count + ")" : ""}`;
+}
 
 // Auto-select some defaults if keys are available
 if (hasKey("euri")) {
