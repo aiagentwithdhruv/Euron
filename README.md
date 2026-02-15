@@ -39,6 +39,7 @@ response = client.chat.completions.create(model="gemini-2.5-flash", messages=[{"
 | File | Description |
 |------|-------------|
 | `test.html` | Interactive API tester — open in browser, test all 3 endpoints |
+| `model-arena/arena.html` | **Model Arena** — compare 2-4 models side-by-side with benchmarks and leaderboard |
 | `euri-client.ts` | TypeScript client for Next.js / Node.js projects |
 | `euri-models.ts` | All 24 model definitions with types and metadata |
 | `examples/basic-chat.ts` | TypeScript usage examples (chat, embeddings, images) |
