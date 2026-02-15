@@ -2,7 +2,7 @@
 
 **Open-source AI testing toolkit.** Compare models, test APIs, benchmark performance — all from your browser.
 
-**[Open Toolkit](https://aiagentwithdhruv.github.io/Euron/)** | **[GitHub](https://github.com/aiagentwithdhruv/Euron)**
+**[Open Toolkit](https://aiagentwithdhruv.github.io/Euron/)** | **[GitHub](https://github.com/aiagentwithdhruv/Euron)** | **[How We Built This](HOW-WE-BUILT-THIS.md)**
 
 ## Live Tools
 
@@ -57,6 +57,7 @@ response = client.chat.completions.create(model="gemini-2.5-flash", messages=[{"
 | `index.html` | **[Landing page](https://aiagentwithdhruv.github.io/Euron/)** — links to all tools |
 | `model-arena/` | **[Model Arena](https://aiagentwithdhruv.github.io/Euron/model-arena/arena.html)** — compare 50+ models across 9 providers |
 | `euri-tester/` | **[Euri API Tester](https://aiagentwithdhruv.github.io/Euron/euri-tester/)** — chat, images, embeddings with free Euri API |
+| `HOW-WE-BUILT-THIS.md` | **[Case study](HOW-WE-BUILT-THIS.md)** — how we built this with AI in 3 hours |
 | `euri-client.ts` | TypeScript client for Next.js / Node.js projects |
 | `euri-models.ts` | All 24 model definitions with types and metadata |
 | `examples/` | Usage examples — TypeScript, Python, n8n, Next.js |
