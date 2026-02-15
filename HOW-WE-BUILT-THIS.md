@@ -301,7 +301,7 @@ open Euron/index.html
 
 **Or just open:** https://aiagentwithdhruv.github.io/Euron/
 
-**Questions?** Open an issue or DM [@aiagentwithdhruv](https://github.com/aiagentwithdhruv)
+**Questions?** Reach out to [Dhruv on LinkedIn](https://www.linkedin.com/in/aiwithdhruv/) or open an [issue on GitHub](https://github.com/aiagentwithdhruv/Euron/issues)
 
 ---
 
