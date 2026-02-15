@@ -140,6 +140,10 @@
     .history-body { display: none; padding: 0 14px 10px; font-size: 12px; color: #a1a1aa; }
     .history-entry.open .history-body { display: block; }
     .history-actions { display: flex; gap: 8px; margin-bottom: 12px; }
+    .share-bar { display: none; padding: 8px 32px; gap: 8px; align-items: center; }
+    .share-bar.show { display: flex; }
+    .share-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #22c55e; color: #000; padding: 10px 24px; border-radius: 8px; font-size: 13px; font-weight: 600; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .share-toast.visible { opacity: 1; }
 
     /* ── Blind Mode ─────────────────────────────── */
     .blind-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #a1a1aa; cursor: pointer; user-select: none; }
@@ -242,6 +246,13 @@
     <div class="arena-empty">Select models and click "Run Arena" to start comparing</div>
   </div>
 </div>
+
+<!-- ═══ SHARE BAR ═══ -->
+<div class="share-bar" id="shareBar">
+  <button class="btn btn-secondary btn-sm" onclick="shareAsMarkdown()">&#128203; Copy as Markdown</button>
+  <button class="btn btn-secondary btn-sm" onclick="shareAsText()">&#128196; Copy as Text</button>
+</div>
+<div class="share-toast" id="shareToast">Copied to clipboard!</div>
 
 <!-- ═══ RESULTS ═══ -->
 <div class="results-section" id="resultsSection" style="display:none;">
@@ -387,6 +398,102 @@ const BENCHMARKS = {
   ]},
   custom: { name: "Custom", icon: "\u{270F}\u{FE0F}", prompts: [] },
 };
+
+// ═══════════════════════════════════════════════════════════════════
+// PRICING ($ per 1M tokens) — input / output
+// ═══════════════════════════════════════════════════════════════════
+const PRICING = {
+  // Euri = free
+  "euri": { input: 0, output: 0 },
+  // OpenAI
+  "openai:gpt-4o": { input: 2.50, output: 10.00 },
+  "openai:gpt-4o-mini": { input: 0.15, output: 0.60 },
+  "openai:gpt-4.1": { input: 2.00, output: 8.00 },
+  "openai:gpt-4.1-mini": { input: 0.40, output: 1.60 },
+  "openai:gpt-4.1-nano": { input: 0.10, output: 0.40 },
+  "openai:o4-mini": { input: 1.10, output: 4.40 },
+  "openai:o3-mini": { input: 1.10, output: 4.40 },
+  // Anthropic
+  "anthropic:claude-opus-4-6": { input: 15.00, output: 75.00 },
+  "anthropic:claude-sonnet-4-5-20250929": { input: 3.00, output: 15.00 },
+  "anthropic:claude-haiku-4-5-20251001": { input: 0.80, output: 4.00 },
+  // Google
+  "google:gemini-2.5-flash": { input: 0.15, output: 0.60 },
+  "google:gemini-2.5-pro": { input: 1.25, output: 10.00 },
+  "google:gemini-2.0-flash": { input: 0.10, output: 0.40 },
+  // Groq = free tier
+  "groq": { input: 0, output: 0 },
+  // OpenRouter — approximate, varies
+  "openrouter:anthropic/claude-sonnet-4-5": { input: 3.00, output: 15.00 },
+  "openrouter:anthropic/claude-haiku-4-5": { input: 0.80, output: 4.00 },
+  "openrouter:openai/gpt-4o": { input: 2.50, output: 10.00 },
+  "openrouter:openai/gpt-4.1-mini": { input: 0.40, output: 1.60 },
+  "openrouter:google/gemini-2.5-flash": { input: 0.15, output: 0.60 },
+  "openrouter:google/gemini-2.5-pro": { input: 1.25, output: 10.00 },
+  "openrouter:deepseek/deepseek-chat-v3-0324": { input: 0.27, output: 1.10 },
+  "openrouter:deepseek/deepseek-r1": { input: 0.55, output: 2.19 },
+  "openrouter:meta-llama/llama-3.3-70b-instruct": { input: 0.10, output: 0.10 },
+  "openrouter:mistralai/mistral-large": { input: 2.00, output: 6.00 },
+  "openrouter:x-ai/grok-3-mini": { input: 0.30, output: 0.50 },
+  "openrouter:qwen/qwen3-32b": { input: 0.10, output: 0.10 },
+  // DeepSeek
+  "deepseek:deepseek-chat": { input: 0.27, output: 1.10 },
+  "deepseek:deepseek-reasoner": { input: 0.55, output: 2.19 },
+  // xAI
+  "xai:grok-3": { input: 3.00, output: 15.00 },
+  "xai:grok-3-mini": { input: 0.30, output: 0.50 },
+  // Mistral
+  "mistral:mistral-large-latest": { input: 2.00, output: 6.00 },
+  "mistral:mistral-small-latest": { input: 0.10, output: 0.30 },
+};
+
+function getModelCost(provider, modelId, promptTokens, completionTokens) {
+  const specific = PRICING[provider + ":" + modelId];
+  const providerDefault = PRICING[provider];
+  const p = specific || providerDefault;
+  if (!p) return null;
+  const cost = (promptTokens * p.input + completionTokens * p.output) / 1000000;
+  return cost;
+}
+
+function formatCost(cost) {
+  if (cost === null || cost === undefined) return "N/A";
+  if (cost === 0) return "Free";
+  if (cost < 0.001) return "<$0.001";
+  if (cost < 0.01) return "$" + cost.toFixed(4);
+  return "$" + cost.toFixed(3);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ELO RATING SYSTEM
+// ═══════════════════════════════════════════════════════════════════
+const ELO_K = 32;
+const ELO_DEFAULT = 1500;
+
+function calculateEloRatings() {
+  const h = loadHistory();
+  const ratings = {};
+
+  h.slice().reverse().forEach(run => {
+    const keys = Object.keys(run.results).filter(k => run.results[k].status === "done");
+    const winnerKey = keys.find(k => run.results[k].vote);
+    if (!winnerKey || keys.length < 2) return;
+
+    keys.forEach(k => { if (!ratings[k]) ratings[k] = ELO_DEFAULT; });
+
+    // Winner plays against each loser
+    keys.filter(k => k !== winnerKey).forEach(loserKey => {
+      const rW = ratings[winnerKey];
+      const rL = ratings[loserKey];
+      const eW = 1 / (1 + Math.pow(10, (rL - rW) / 400));
+      const eL = 1 / (1 + Math.pow(10, (rW - rL) / 400));
+      ratings[winnerKey] = rW + ELO_K * (1 - eW);
+      ratings[loserKey] = rL + ELO_K * (0 - eL);
+    });
+  });
+
+  return ratings;
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // STATE
@@ -685,6 +792,7 @@ async function runArena() {
   STATE.runsThisSession++;
   STATE.blindRevealed = false;
   hideRevealBar();
+  document.getElementById("shareBar").classList.remove("show");
   document.getElementById("runsCounter").textContent = STATE.runsThisSession + " run" + (STATE.runsThisSession > 1 ? "s" : "");
 
   const btn = document.getElementById("runArena");
@@ -724,6 +832,7 @@ async function runArena() {
     showRevealBar();
   } else {
     highlightBest();
+    document.getElementById("shareBar").classList.add("show");
   }
   renderRunTable();
   saveToHistory();
@@ -772,14 +881,16 @@ function createCard(key) {
 
   let footer = "";
   if (r.metrics) {
+    const cost = getModelCost(r.provider, r.modelId, r.metrics.promptTokens, r.metrics.completionTokens);
+    const costStr = formatCost(cost);
     // In blind mode, hide speed metrics (they reveal model identity) — only show after reveal
     const metricsHtml = blind
       ? `<div class="metric"><span class="metric-value">???</span><span class="metric-label">Latency</span></div>
          <div class="metric"><span class="metric-value">???</span><span class="metric-label">Tok/sec</span></div>
-         <div class="metric"><span class="metric-value">???</span><span class="metric-label">Tokens</span></div>`
+         <div class="metric"><span class="metric-value">???</span><span class="metric-label">Cost</span></div>`
       : `<div class="metric"><span class="metric-value" data-m="latency">${r.metrics.latencyMs}ms</span><span class="metric-label">Latency</span></div>
          <div class="metric"><span class="metric-value" data-m="tps">${r.metrics.tokensPerSec}</span><span class="metric-label">Tok/sec</span></div>
-         <div class="metric"><span class="metric-value" data-m="tokens">${r.metrics.totalTokens}</span><span class="metric-label">Tokens</span></div>`;
+         <div class="metric"><span class="metric-value" data-m="cost" style="${costStr === 'Free' ? 'color:#22c55e' : ''}">${costStr}</span><span class="metric-label">Cost</span></div>`;
     footer = `<div class="model-card-footer">
       ${metricsHtml}
       <button class="vote-btn ${r.vote ? "voted" : ""}" onclick="voteModel('${key}')">${r.vote ? "\u2713 Best" : "Vote Best"}</button>
@@ -824,6 +935,7 @@ document.getElementById("blindToggle").addEventListener("click", () => {
 function revealModels() {
   STATE.blindRevealed = true;
   document.getElementById("revealBar").classList.remove("show");
+  document.getElementById("shareBar").classList.add("show");
   // Re-render all cards with real names + metrics
   STATE.selectedModels.forEach(m => renderSingleCard(modelKey(m)));
   highlightBest();
@@ -886,8 +998,11 @@ function renderRunTable() {
   const bestLat = Math.min(...done.map(r => r.metrics.latencyMs));
   const bestTps = Math.max(...done.map(r => r.metrics.tokensPerSec));
   const arrow = STATE.sortAsc ? " \u2191" : " \u2193";
-  const cols = ["#", "Model", "Provider", "Latency", "Tok/sec", "Prompt", "Completion", "Total", "Vote"];
-  const sortKeys = ["rank", "model", "provider", "latency", "tps", "prompt", "completion", "total", "vote"];
+  const cols = ["#", "Model", "Provider", "Latency", "Tok/sec", "Cost", "Tokens", "Vote"];
+  const sortKeys = ["rank", "model", "provider", "latency", "tps", "cost", "total", "vote"];
+
+  // Pre-compute costs
+  done.forEach(r => { r._cost = getModelCost(r.provider, r.modelId, r.metrics.promptTokens, r.metrics.completionTokens); });
 
   el.innerHTML = `<table class="results-table"><thead><tr>${cols.map((c, i) =>
     `<th data-sort="${sortKeys[i]}" class="${STATE.sortCol === sortKeys[i] ? "sorted" : ""}">${c}${STATE.sortCol === sortKeys[i] ? arrow : ""}</th>`
@@ -897,8 +1012,7 @@ function renderRunTable() {
     <td><span class="provider-dot ${PROVIDERS[r.provider].color}" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>${PROVIDERS[r.provider].name}</td>
     <td class="${r.metrics.latencyMs === bestLat ? "best-cell" : ""}">${r.metrics.latencyMs}ms</td>
     <td class="${r.metrics.tokensPerSec === bestTps ? "best-cell" : ""}">${r.metrics.tokensPerSec}</td>
-    <td>${r.metrics.promptTokens}</td>
-    <td>${r.metrics.completionTokens}</td>
+    <td style="${r._cost === 0 ? 'color:#22c55e' : ''}">${formatCost(r._cost)}</td>
     <td>${r.metrics.totalTokens}</td>
     <td><button class="vote-btn ${r.vote ? "voted" : ""}" onclick="voteModel('${r.key}')">${r.vote ? "\u2713" : "Vote"}</button></td>
   </tr>`).join("")}</tbody></table>`;
@@ -996,21 +1110,85 @@ function renderLeaderboard() {
     });
   });
 
+  const eloRatings = calculateEloRatings();
+
   const lb = Object.values(stats).map(s => {
     s.avgLat = s.lats.length ? Math.round(s.lats.reduce((a, b) => a + b, 0) / s.lats.length) : 0;
     s.avgTps = s.tps.length ? Math.round(s.tps.reduce((a, b) => a + b, 0) / s.tps.length * 10) / 10 : 0;
     s.winRate = s.runs > 0 ? Math.round((s.wins / s.runs) * 100) : 0;
+    s.elo = Math.round(eloRatings[s.key] || ELO_DEFAULT);
     return s;
-  }).sort((a, b) => b.winRate - a.winRate || a.avgLat - b.avgLat);
+  }).sort((a, b) => b.elo - a.elo || b.winRate - a.winRate);
 
-  const maxWr = Math.max(...lb.map(s => s.winRate), 1);
-  el.innerHTML = `<table class="results-table"><thead><tr><th>#</th><th>Model</th><th>Provider</th><th>Win Rate</th><th>Avg Latency</th><th>Avg Tok/sec</th><th>Runs</th><th>Wins</th></tr></thead>
+  const maxElo = Math.max(...lb.map(s => s.elo), ELO_DEFAULT + 1);
+  const minElo = Math.min(...lb.map(s => s.elo), ELO_DEFAULT - 1);
+  const eloRange = maxElo - minElo || 1;
+  el.innerHTML = `<table class="results-table"><thead><tr><th>#</th><th>Model</th><th>Provider</th><th>ELO</th><th>Win Rate</th><th>Avg Latency</th><th>Avg Tok/sec</th><th>Runs</th></tr></thead>
   <tbody>${lb.map((s, i) => `<tr>
     <td>${i + 1}</td><td><strong>${s.modelName}</strong></td>
     <td><span class="provider-dot ${PROVIDERS[s.provider]?.color || ""}" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>${s.providerName}</td>
-    <td><div class="lb-winrate"><span style="width:36px;text-align:right;font-weight:600;${s.winRate > 0 ? "color:#22c55e" : ""}">${s.winRate}%</span><div class="lb-bar"><div class="lb-bar-fill" style="width:${(s.winRate / maxWr) * 100}%"></div></div></div></td>
-    <td>${s.avgLat}ms</td><td>${s.avgTps}</td><td>${s.runs}</td><td>${s.wins}</td>
+    <td><div class="lb-winrate"><span style="width:42px;text-align:right;font-weight:700;color:${s.elo >= ELO_DEFAULT ? '#22c55e' : '#f87171'}">${s.elo}</span><div class="lb-bar"><div class="lb-bar-fill" style="width:${((s.elo - minElo) / eloRange) * 100}%"></div></div></div></td>
+    <td style="${s.winRate > 0 ? "color:#22c55e;font-weight:600" : ""}">${s.winRate}%</td>
+    <td>${s.avgLat}ms</td><td>${s.avgTps}</td><td>${s.runs}</td>
   </tr>`).join("")}</tbody></table>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SHARE RESULTS
+// ═══════════════════════════════════════════════════════════════════
+function getShareData() {
+  const done = Object.entries(STATE.results).filter(([, r]) => r.status === "done" && r.metrics).map(([k, r]) => ({ ...r, key: k }));
+  if (!done.length) return null;
+  const winner = done.find(r => r.vote);
+  const cat = BENCHMARKS[STATE.currentCategory];
+  return { done, winner, cat, prompt: STATE.currentPrompt };
+}
+
+function shareAsMarkdown() {
+  const d = getShareData();
+  if (!d) return;
+  const sorted = d.done.sort((a, b) => a.metrics.latencyMs - b.metrics.latencyMs);
+  let md = `## AI Model Arena Results\n\n`;
+  md += `**Category:** ${d.cat?.name || "Custom"}\n`;
+  md += `**Prompt:** "${d.prompt.substring(0, 100)}${d.prompt.length > 100 ? "..." : ""}"\n\n`;
+  md += `| Model | Provider | Latency | Tok/sec | Cost | Winner |\n`;
+  md += `|-------|----------|---------|---------|------|--------|\n`;
+  sorted.forEach(r => {
+    const cost = getModelCost(r.provider, r.modelId, r.metrics.promptTokens, r.metrics.completionTokens);
+    md += `| ${r.modelName} | ${r.providerName} | ${r.metrics.latencyMs}ms | ${r.metrics.tokensPerSec} | ${formatCost(cost)} | ${r.vote ? "✅" : ""} |\n`;
+  });
+  if (d.winner) md += `\n**Winner:** ${d.winner.modelName} (${d.winner.providerName})\n`;
+  md += `\n*Tested with [AI Model Arena](https://aiagentwithdhruv.github.io/Euron/model-arena/arena.html)*`;
+  copyAndToast(md);
+}
+
+function shareAsText() {
+  const d = getShareData();
+  if (!d) return;
+  const sorted = d.done.sort((a, b) => a.metrics.latencyMs - b.metrics.latencyMs);
+  let txt = `AI Model Arena Results\n`;
+  txt += `Category: ${d.cat?.name || "Custom"}\n`;
+  txt += `Prompt: "${d.prompt.substring(0, 80)}${d.prompt.length > 80 ? "..." : ""}"\n\n`;
+  sorted.forEach((r, i) => {
+    const cost = getModelCost(r.provider, r.modelId, r.metrics.promptTokens, r.metrics.completionTokens);
+    txt += `${i + 1}. ${r.modelName} (${r.providerName}) — ${r.metrics.latencyMs}ms, ${r.metrics.tokensPerSec} tok/s, ${formatCost(cost)}${r.vote ? " ✅ Winner" : ""}\n`;
+  });
+  txt += `\nTest any model: aiagentwithdhruv.github.io/Euron/model-arena/arena.html`;
+  copyAndToast(txt);
+}
+
+function copyAndToast(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById("shareToast");
+    toast.classList.add("visible");
+    setTimeout(() => toast.classList.remove("visible"), 2000);
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+    const toast = document.getElementById("shareToast");
+    toast.classList.add("visible");
+    setTimeout(() => toast.classList.remove("visible"), 2000);
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════
