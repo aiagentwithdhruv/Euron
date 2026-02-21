@@ -1,430 +1,614 @@
-# Mail MCP — Build Your Own Email Automation with AI
+# MCP Toolkit — Complete Setup Guide
 
-> **Control your Gmail entirely from Claude Desktop or Cursor.**
-> Read, send, search, and manage emails — all from chat. Zero inbox visits.
+> **8 MCP servers. 50 tools. One setup guide.**
+> Control Gmail, Calendar, Sheets, Supabase, MongoDB, S3, Azure Blob, YouTube, Instagram, and Facebook — entirely from AI chat via Claude Desktop or Cursor.
+
+---
+
+## Table of Contents
+
+1. [What is This?](#what-is-this)
+2. [Architecture](#architecture)
+3. [All Servers & Tools](#all-servers--tools)
+4. [Prerequisites](#prerequisites)
+5. [Setup: Google Services (Mail, Calendar, Sheets)](#setup-google-services-mail-calendar-sheets)
+6. [Setup: Supabase](#setup-supabase)
+7. [Setup: MongoDB](#setup-mongodb)
+8. [Setup: AWS S3](#setup-aws-s3)
+9. [Setup: Azure Blob Storage](#setup-azure-blob-storage)
+10. [Setup: Social Media (YouTube + Instagram + Facebook)](#setup-social-media-youtube--instagram--facebook)
+11. [Adding to Claude Desktop](#adding-to-claude-desktop)
+12. [Adding to Cursor IDE](#adding-to-cursor-ide)
+13. [Full Config Example (All 8 Servers)](#full-config-example-all-8-servers)
+14. [Usage Examples](#usage-examples)
+15. [Troubleshooting](#troubleshooting)
+16. [Project Structure](#project-structure)
 
 ---
 
 ## What is This?
 
-This project is a **Model Context Protocol (MCP)** server written in Python that connects your Gmail account to AI tools like **Claude Desktop** and **Cursor IDE**.
+This is a collection of **Model Context Protocol (MCP)** servers built in Python using the **FastMCP** library. Each server connects a real-world service (Gmail, Calendar, databases, cloud storage, social media) to AI assistants like Claude and Cursor.
 
-Once configured, you can literally type:
-- *"Show me my last 5 emails"*
-- *"Send an email to john@example.com about the meeting"*
-- *"Find all unread emails from GitHub"*
-- *"Mark all newsletter emails as read"*
+Once configured, you just chat naturally:
+- *"Read my last 5 emails"*
+- *"What's on my calendar today?"*
+- *"Query the users table where status is active"*
+- *"Upload this text to my S3 bucket"*
+- *"How many subscribers does my YouTube channel have?"*
 
-...and the AI does it for you instantly.
-
-### How It Works (Architecture)
-
-```
-You (Chat)
-   |
-   v
-Claude Desktop / Cursor
-   |
-   v  (MCP Protocol over stdio)
-Email MCP Server (Python + FastMCP)
-   |
-   v  (OAuth 2.0)
-Gmail API (Google Cloud)
-   |
-   v
-Your Gmail Inbox
-```
-
-### Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| AI Client | Claude Desktop / Cursor IDE |
-| Protocol | MCP (Model Context Protocol) via stdio |
-| Server | Python + FastMCP library |
-| Email API | Gmail API (Google Cloud) |
-| Auth | OAuth 2.0 Desktop Client (no app passwords!) |
-| Style | Functional programming (no classes) |
+**Key design principles:**
+- **Functional style** — no classes, just plain decorated functions
+- **Stdio transport** — works natively with Claude Desktop and Cursor
+- **Each server is independent** — pick and choose what you need
+- **Secure** — credentials are never committed to Git
 
 ---
 
-## Available Tools
+## Architecture
 
-| # | Tool Name | What It Does | Parameters |
-|---|-----------|-------------|------------|
-| 1 | `send_email` | Send an email to anyone | `to_email`, `subject`, `body` |
-| 2 | `read_recent_emails` | Fetch latest N emails | `limit` (default: 5), `query` (optional) |
-| 3 | `search_emails` | Search with Gmail syntax | `query`, `limit` (default: 5) |
-| 4 | `mark_email_seen` | Mark matching emails as read | `query` |
+```
+You (Natural Language)
+   │
+   ▼
+Claude Desktop / Cursor IDE
+   │
+   ▼  (MCP Protocol — stdio)
+┌─────────────────────────────────────────────┐
+│              MCP Servers (Python)            │
+│                                             │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
+│  │  Gmail   │  │ Calendar │  │  Sheets  │  │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  │
+│       │              │              │        │
+│       ▼              ▼              ▼        │
+│     Google APIs (OAuth 2.0)                  │
+│                                             │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
+│  │ Supabase │  │ MongoDB  │  │   S3     │  │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  │
+│       │              │              │        │
+│       ▼              ▼              ▼        │
+│   REST API      pymongo         boto3       │
+│                                             │
+│  ┌──────────┐  ┌───────────────────────┐    │
+│  │  Azure   │  │  Social Media         │    │
+│  │  Blob    │  │  (YT + IG + FB)       │    │
+│  └────┬─────┘  └────┬──────────────────┘    │
+│       │              │                       │
+│       ▼              ▼                       │
+│  azure SDK    Google + Meta APIs             │
+└─────────────────────────────────────────────┘
+```
+
+---
+
+## All Servers & Tools
+
+### 1. Gmail (4 tools)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `send_email` | Send an email | `to_email`, `subject`, `body` |
+| `read_recent_emails` | Fetch latest emails | `limit`, `query` |
+| `search_emails` | Search with Gmail syntax | `query`, `limit` |
+| `mark_email_seen` | Mark as read | `query` |
+
+### 2. Google Calendar (5 tools)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `list_events` | Upcoming events | `limit`, `days_ahead` |
+| `create_event` | Create an event | `summary`, `start_datetime`, `end_datetime`, `description`, `location` |
+| `search_events` | Search by text | `query`, `limit` |
+| `delete_event` | Delete an event | `event_id` |
+| `get_todays_schedule` | Today's full schedule | — |
+
+### 3. Google Sheets (5 tools)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `read_sheet` | Read a range | `spreadsheet_id`, `range_name` |
+| `write_to_sheet` | Write to a range | `spreadsheet_id`, `range_name`, `values` |
+| `append_to_sheet` | Append rows | `spreadsheet_id`, `range_name`, `values` |
+| `create_spreadsheet` | Create new spreadsheet | `title` |
+| `list_sheets` | List all tabs | `spreadsheet_id` |
+
+### 4. Supabase (6 tools)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `query_table` | Query with filters | `table_name`, `select_columns`, `limit`, `filters` |
+| `insert_row` | Insert a row | `table_name`, `data` (JSON) |
+| `update_row` | Update matching rows | `table_name`, `match_column`, `match_value`, `data` |
+| `delete_row` | Delete matching rows | `table_name`, `match_column`, `match_value` |
+| `list_tables` | List all tables | — |
+| `run_sql` | Execute raw SQL | `sql_query` |
+
+### 5. MongoDB (7 tools)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `list_collections` | List collections | — |
+| `query_collection` | Query documents | `collection`, `filter_json`, `limit` |
+| `insert_document` | Insert a document | `collection`, `document` (JSON) |
+| `update_documents` | Update matching docs | `collection`, `filter_json`, `update_json` |
+| `delete_documents` | Delete matching docs | `collection`, `filter_json` |
+| `count_documents` | Count matching docs | `collection`, `filter_json` |
+| `aggregate` | Aggregation pipeline | `collection`, `pipeline_json` |
+
+### 6. AWS S3 (6 tools)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `list_buckets` | List all buckets | — |
+| `list_objects` | List objects in bucket | `bucket`, `prefix`, `limit` |
+| `upload_text` | Upload text content | `bucket`, `key`, `content` |
+| `download_text` | Download text content | `bucket`, `key` |
+| `delete_object` | Delete an object | `bucket`, `key` |
+| `get_presigned_url` | Temporary access URL | `bucket`, `key`, `expiration` |
+
+### 7. Azure Blob Storage (7 tools)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `list_containers` | List containers | — |
+| `list_blobs` | List blobs | `container`, `prefix`, `limit` |
+| `upload_text` | Upload text content | `container`, `blob_name`, `content` |
+| `download_text` | Download text content | `container`, `blob_name` |
+| `delete_blob` | Delete a blob | `container`, `blob_name` |
+| `create_container` | Create container | `container` |
+| `generate_sas_url` | Temporary SAS URL | `container`, `blob_name`, `expiry_hours` |
+
+### 8. Social Media (10 tools)
+
+**YouTube:**
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `youtube_search` | Search videos | `query`, `limit` |
+| `youtube_channel_stats` | Channel analytics | `channel_id` |
+| `youtube_video_details` | Video stats | `video_id` |
+| `youtube_my_videos` | Your uploaded videos | `limit` |
+
+**Instagram:**
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `instagram_profile` | Profile & followers | — |
+| `instagram_recent_posts` | Recent posts | `limit` |
+| `instagram_post_insights` | Post analytics | `media_id` |
+
+**Facebook:**
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `facebook_page_info` | Page info & followers | — |
+| `facebook_recent_posts` | Recent page posts | `limit` |
+| `facebook_post_to_page` | Post to page | `message` |
 
 ---
 
 ## Prerequisites
 
-Before you start, make sure you have:
-
-- [ ] **Python 3.9+** installed ([Download](https://www.python.org/downloads/))
-- [ ] A **Gmail account**
-- [ ] **Claude Desktop** ([Download](https://claude.ai/download)) and/or **Cursor IDE** ([Download](https://cursor.com))
-- [ ] Access to [Google Cloud Console](https://console.cloud.google.com/)
-- [ ] A terminal / command line
+- [ ] **Python 3.9+** — [Download](https://www.python.org/downloads/)
+- [ ] **Claude Desktop** — [Download](https://claude.ai/download) and/or **Cursor IDE** — [Download](https://cursor.com)
+- [ ] **Terminal** access (macOS Terminal, Windows CMD/PowerShell, or IDE terminal)
+- [ ] Accounts for the services you want to use (Google, Supabase, MongoDB, AWS, Azure, Meta)
 
 ---
 
-## Step-by-Step Setup
+## Setup: Google Services (Mail, Calendar, Sheets)
 
-### Step 1 of 5 — Google Cloud Credentials
+All three Google services share the same authentication pattern. Set up Google Cloud once, then reuse the same `credentials.json` for each.
 
-You need to create an OAuth 2.0 client so the MCP server can access Gmail securely on your behalf. This is a one-time setup.
-
-#### 1A. Create a Google Cloud Project
+### Step 1 — Google Cloud Project (One-Time)
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Click the project dropdown (top-left) → **New Project**
-3. Name it something like `Mail MCP` → **Create**
-4. Make sure your new project is selected in the dropdown
+2. Create a **new project** (e.g., `MCP Toolkit`)
+3. Enable the following APIs under **APIs & Services → Library**:
+   - **Gmail API**
+   - **Google Calendar API**
+   - **Google Sheets API**
 
-#### 1B. Enable the Gmail API
+### Step 2 — OAuth Consent Screen (One-Time)
 
-1. In the left sidebar: **APIs & Services** → **Library**
-2. Search for **Gmail API**
-3. Click on it → **Enable**
+1. Go to **APIs & Services → OAuth consent screen**
+2. Choose **External** → Create
+3. Fill in: App name, Support email, Developer email
+4. Click through remaining steps
+5. Under **Test users** → Add your Google email address
 
-#### 1C. Configure OAuth Consent Screen
+### Step 3 — Create OAuth Client (One-Time)
 
-1. Go to **APIs & Services** → **OAuth consent screen**
-2. Choose **External** → **Create**
-3. Fill in:
-   - App name: `Mail MCP`
-   - User support email: *your email*
-   - Developer contact email: *your email*
-4. Click **Save and Continue** through the remaining steps
-5. Under **Test users**, click **Add Users** → add your Gmail address
-6. **Save and Continue** → **Back to Dashboard**
-
-#### 1D. Create OAuth Client ID
-
-1. Go to **APIs & Services** → **Credentials**
-2. Click **+ Create Credentials** → **OAuth client ID**
+1. Go to **APIs & Services → Credentials**
+2. Click **+ Create Credentials → OAuth client ID**
 3. Application type: **Desktop app**
-4. Name: `Mail MCP` (or anything)
-5. Click **Create**
-6. A dialog shows your **Client ID** and **Client Secret** — copy both or click **Download JSON**
+4. Download the JSON file
+5. Rename it to `credentials.json`
 
-#### 1E. Save Credentials
+### Step 4 — Set Up Each Server
 
-**Option A — Downloaded JSON file:**
-- Rename the file to `credentials.json`
-- Place it inside the MCP project folder (same directory as `email_mcp.py`)
-
-**Option B — Manual (if you copied Client ID and Secret):**
-- Create a file called `credentials.json` in the MCP folder with this structure:
-
-```json
-{
-  "installed": {
-    "client_id": "YOUR_CLIENT_ID_HERE",
-    "project_id": "your-project-id",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_secret": "YOUR_CLIENT_SECRET_HERE",
-    "redirect_uris": ["http://localhost"]
-  }
-}
-```
-
-> **Security Warning:** Never commit `credentials.json` or `token.json` to Git. The included `.gitignore` already handles this.
-
----
-
-### Step 2 of 5 — Project Setup (Python Environment)
-
-Open a terminal and navigate to the MCP folder.
-
-#### 2A. Clone the repo (if you haven't)
+Repeat for each: `Gen AI 2.O/MCP/` (mail), `calendar/`, `sheets/`
 
 ```bash
-git clone https://github.com/aiagentwithdhruv/Euron.git
-cd "Euron/Gen AI 2.O/MCP"
-```
+# Navigate to the server folder
+cd "Gen AI 2.O/MCP"          # For mail
+# cd "Gen AI 2.O/MCP/calendar"  # For calendar
+# cd "Gen AI 2.O/MCP/sheets"    # For sheets
 
-#### 2B. Create a virtual environment
+# Copy your credentials.json into this folder
+cp /path/to/credentials.json .
 
-```bash
+# Create virtual environment
 python3 -m venv venv
-```
 
-#### 2C. Activate the virtual environment
+# Activate
+source venv/bin/activate      # macOS/Linux
+# venv\Scripts\activate       # Windows
 
-| OS | Command |
-|----|---------|
-| macOS / Linux | `source venv/bin/activate` |
-| Windows (CMD) | `venv\Scripts\activate` |
-| Windows (PowerShell) | `venv\Scripts\Activate.ps1` |
-
-You should see `(venv)` in your terminal prompt after activation.
-
-#### 2D. Install dependencies
-
-```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-This installs:
-
-| Package | Purpose |
-|---------|---------|
-| `mcp[cli]` | FastMCP server framework and CLI tools |
-| `google-api-python-client` | Official Google API client for Gmail |
-| `google-auth-httplib2` | HTTP transport for Google Auth |
-| `google-auth-oauthlib` | OAuth 2.0 browser-based login flow |
-
----
-
-### Step 3 of 5 — One-Time Authentication
-
-Before the MCP server can run in the background, you need to authorize it once through your browser. After this, it stores a `token.json` that auto-refreshes.
-
-#### 3A. Run the authentication script
-
-Make sure venv is activated, then:
-
-```bash
+# Authenticate (opens browser — one-time)
 python authenticate.py
 ```
 
-#### 3B. Complete the browser login
+After authenticating, a `token.json` file is created. The server auto-refreshes it.
 
-1. A browser window opens automatically with Google Sign-In
-2. Select the **Gmail account** you want the MCP to manage
-3. You may see a warning: *"Google hasn't verified this app"*
-   - Click **Advanced** → **Go to Mail MCP (unsafe)**
-   - This is normal for personal OAuth apps
-4. Click **Allow** to grant Gmail access
-5. You'll see: *"The authentication flow has completed. You may close this window."*
-
-#### 3C. Verify it worked
-
-Check that `token.json` now exists in your MCP folder:
+### Step 5 — Verify
 
 ```bash
-ls token.json
-```
-
-You should also see in your terminal:
-
-```
-Authentication successful!
-token.json has been generated or refreshed.
-```
-
-#### 3D. Quick test (optional)
-
-Verify the connection to Gmail works:
-
-```bash
+# Quick test (mail example)
 python -c "
 from email_mcp import get_gmail_service
 service = get_gmail_service()
 results = service.users().messages().list(userId='me', maxResults=1).execute()
-print(f'Connection OK! Found {len(results.get(\"messages\", []))} message(s).')
+print(f'Connected! Found {len(results.get(\"messages\", []))} message(s).')
 "
 ```
 
 ---
 
-### Step 4 of 5 — Claude Desktop Configuration
+## Setup: Supabase
 
-#### 4A. Locate the config file
+### Step 1 — Get Your Credentials
+
+1. Go to your [Supabase Dashboard](https://supabase.com/dashboard)
+2. Select your project
+3. Go to **Settings → API**
+4. Copy your **Project URL** and **API Key** (use `service_role` key for full access)
+
+### Step 2 — Install & Test
+
+```bash
+cd "Gen AI 2.O/MCP/supabase"
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Quick test
+SUPABASE_URL="https://your-project.supabase.co" \
+SUPABASE_KEY="your-service-role-key" \
+python -c "from supabase_mcp import get_supabase_client; print('Connected!')"
+```
+
+### Auth Note
+
+- **Anon key**: Respects Row Level Security (RLS) policies
+- **Service role key**: Bypasses RLS — full database access (use for admin tools)
+
+---
+
+## Setup: MongoDB
+
+### Step 1 — Get Your Connection String
+
+**MongoDB Atlas (Cloud):**
+1. Go to [MongoDB Atlas](https://cloud.mongodb.com/)
+2. Click **Connect** on your cluster
+3. Choose **Connect your application**
+4. Copy the connection string (replace `<password>` with your actual password)
+
+**Local MongoDB:**
+- Use `mongodb://localhost:27017/`
+
+### Step 2 — Install & Test
+
+```bash
+cd "Gen AI 2.O/MCP/mongodb"
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Quick test
+MONGODB_URI="mongodb+srv://user:pass@cluster.mongodb.net/" \
+MONGODB_DATABASE="your_db" \
+python -c "from mongodb_mcp import get_mongo_client; db = get_mongo_client(); print(f'Connected! Collections: {db.list_collection_names()}')"
+```
+
+---
+
+## Setup: AWS S3
+
+### Step 1 — Get Your AWS Credentials
+
+1. Go to [AWS IAM Console](https://console.aws.amazon.com/iam/)
+2. Create a user (or use an existing one) with **AmazonS3FullAccess** policy
+3. Generate **Access Key ID** and **Secret Access Key**
+
+### Step 2 — Install & Test
+
+```bash
+cd "Gen AI 2.O/MCP/s3"
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Quick test
+AWS_ACCESS_KEY_ID="your-key" \
+AWS_SECRET_ACCESS_KEY="your-secret" \
+AWS_REGION="us-east-1" \
+python -c "from s3_mcp import get_s3_client; s3 = get_s3_client(); print(f'Connected! Buckets: {[b[\"Name\"] for b in s3.list_buckets()[\"Buckets\"]]}')"
+```
+
+---
+
+## Setup: Azure Blob Storage
+
+### Step 1 — Get Your Connection String
+
+1. Go to [Azure Portal](https://portal.azure.com/)
+2. Navigate to your **Storage Account**
+3. Go to **Access keys** under Security + networking
+4. Copy the **Connection string**
+
+### Step 2 — Install & Test
+
+```bash
+cd "Gen AI 2.O/MCP/azure-blob"
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Quick test
+AZURE_STORAGE_CONNECTION_STRING="your-connection-string" \
+python -c "from azure_blob_mcp import get_blob_service; svc = get_blob_service(); print('Connected!')"
+```
+
+---
+
+## Setup: Social Media (YouTube + Instagram + Facebook)
+
+This server combines three platforms. YouTube uses Google OAuth (same as Gmail), while Instagram and Facebook use Meta's Graph API.
+
+### YouTube Setup
+
+1. Enable **YouTube Data API v3** in your Google Cloud project
+2. Copy your `credentials.json` into `Gen AI 2.O/MCP/social-media/`
+
+```bash
+cd "Gen AI 2.O/MCP/social-media"
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python authenticate.py    # Browser login for YouTube
+```
+
+### Instagram & Facebook Setup
+
+1. Go to [Meta for Developers](https://developers.facebook.com/)
+2. Create an app → Choose **Business** type
+3. Add **Instagram Graph API** and **Facebook Login** products
+4. Generate a **long-lived access token**
+5. Get your **Instagram Business Account ID** and **Facebook Page ID**
+
+These are passed as environment variables when configuring the MCP server (see config below).
+
+> **Note:** Instagram requires a Business or Creator account connected to a Facebook Page.
+
+---
+
+## Adding to Claude Desktop
+
+### Config File Location
 
 | OS | Path |
 |----|------|
 | macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
 | Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
 
-#### 4B. Add the EmailAutomation MCP server
+### Config Structure
 
-Open the config file in any editor and add the `EmailAutomation` entry under `mcpServers`.
-
-**macOS example:**
+Each server is an entry under `mcpServers`:
 
 ```json
-{
-  "mcpServers": {
-    "EmailAutomation": {
-      "command": "/ABSOLUTE/PATH/TO/Euron/Gen AI 2.O/MCP/venv/bin/python",
-      "args": [
-        "/ABSOLUTE/PATH/TO/Euron/Gen AI 2.O/MCP/email_mcp.py"
-      ]
-    }
+"ServerName": {
+  "command": "/absolute/path/to/venv/bin/python",
+  "args": ["/absolute/path/to/server_script.py"],
+  "env": {
+    "KEY": "value"
   }
 }
 ```
 
-**Windows example:**
+- `command` — Python from the server's **venv** (not system Python)
+- `args` — Absolute path to the MCP server script
+- `env` — Only for servers that need API keys/connection strings (not Google OAuth servers)
 
-```json
-{
-  "mcpServers": {
-    "EmailAutomation": {
-      "command": "C:\\Users\\YOU\\Euron\\Gen AI 2.O\\MCP\\venv\\Scripts\\python.exe",
-      "args": [
-        "C:\\Users\\YOU\\Euron\\Gen AI 2.O\\MCP\\email_mcp.py"
-      ]
-    }
-  }
-}
-```
-
-> **Key points:**
-> - `command` = the Python binary **inside the venv** (not your system Python)
-> - `args` = single item: the **absolute path** to `email_mcp.py`
-> - No `env` block needed — credentials are read from `credentials.json` and `token.json` in the same folder
-> - No `-m mcp run` — the script handles stdio transport directly
-
-#### 4C. Restart Claude Desktop
-
-- **macOS:** Cmd+Q → Reopen
-- **Windows:** Close completely from system tray → Reopen
-
-The MCP should now show as connected. If you see errors, check [Troubleshooting](#troubleshooting).
+After updating the config: **Quit Claude Desktop (Cmd+Q) → Reopen**
 
 ---
 
-### Step 5 of 5 — Cursor IDE Configuration
+## Adding to Cursor IDE
 
-#### 5A. Locate the config file
+### Config File Location
 
 | OS | Path |
 |----|------|
 | macOS / Linux | `~/.cursor/mcp.json` |
 | Windows | `%USERPROFILE%\.cursor\mcp.json` |
 
-#### 5B. Add the EmailAutomation MCP server
+Same config format as Claude Desktop. After updating: **Cmd+Shift+P → Reload Window**
 
-Same structure as Claude Desktop:
+---
+
+## Full Config Example (All 8 Servers)
+
+Replace `/PATH/TO/MCP` with the actual absolute path to your `Gen AI 2.O/MCP/` folder.
 
 ```json
 {
   "mcpServers": {
     "EmailAutomation": {
-      "command": "/ABSOLUTE/PATH/TO/Euron/Gen AI 2.O/MCP/venv/bin/python",
-      "args": [
-        "/ABSOLUTE/PATH/TO/Euron/Gen AI 2.O/MCP/email_mcp.py"
-      ]
+      "command": "/PATH/TO/MCP/venv/bin/python",
+      "args": ["/PATH/TO/MCP/email_mcp.py"]
+    },
+    "GoogleCalendar": {
+      "command": "/PATH/TO/MCP/calendar/venv/bin/python",
+      "args": ["/PATH/TO/MCP/calendar/calendar_mcp.py"]
+    },
+    "GoogleSheets": {
+      "command": "/PATH/TO/MCP/sheets/venv/bin/python",
+      "args": ["/PATH/TO/MCP/sheets/sheets_mcp.py"]
+    },
+    "SupabaseDB": {
+      "command": "/PATH/TO/MCP/supabase/venv/bin/python",
+      "args": ["/PATH/TO/MCP/supabase/supabase_mcp.py"],
+      "env": {
+        "SUPABASE_URL": "https://your-project.supabase.co",
+        "SUPABASE_KEY": "your-service-role-key"
+      }
+    },
+    "MongoDB": {
+      "command": "/PATH/TO/MCP/mongodb/venv/bin/python",
+      "args": ["/PATH/TO/MCP/mongodb/mongodb_mcp.py"],
+      "env": {
+        "MONGODB_URI": "mongodb+srv://user:pass@cluster.mongodb.net/",
+        "MONGODB_DATABASE": "your_database"
+      }
+    },
+    "S3Storage": {
+      "command": "/PATH/TO/MCP/s3/venv/bin/python",
+      "args": ["/PATH/TO/MCP/s3/s3_mcp.py"],
+      "env": {
+        "AWS_ACCESS_KEY_ID": "your-access-key",
+        "AWS_SECRET_ACCESS_KEY": "your-secret-key",
+        "AWS_REGION": "us-east-1"
+      }
+    },
+    "AzureBlob": {
+      "command": "/PATH/TO/MCP/azure-blob/venv/bin/python",
+      "args": ["/PATH/TO/MCP/azure-blob/azure_blob_mcp.py"],
+      "env": {
+        "AZURE_STORAGE_CONNECTION_STRING": "your-connection-string"
+      }
+    },
+    "SocialMedia": {
+      "command": "/PATH/TO/MCP/social-media/venv/bin/python",
+      "args": ["/PATH/TO/MCP/social-media/social_mcp.py"],
+      "env": {
+        "META_ACCESS_TOKEN": "your-meta-access-token",
+        "INSTAGRAM_BUSINESS_ID": "your-ig-business-id",
+        "FACEBOOK_PAGE_ID": "your-fb-page-id"
+      }
     }
   }
 }
 ```
 
-#### 5C. Reload Cursor
-
-- Press **Cmd+Shift+P** (macOS) or **Ctrl+Shift+P** (Windows/Linux)
-- Type **Reload Window** → Enter
-- Go to **Cursor Settings → MCP** to verify EmailAutomation shows green
-
 ---
 
 ## Usage Examples
 
-Once the MCP is connected, just chat naturally:
+### Gmail
+- *"Show me my last 5 emails"*
+- *"Send an email to john@example.com about tomorrow's meeting"*
+- *"Search for emails from GitHub with attachments"*
 
-### Reading Emails
+### Calendar
+- *"What's on my schedule today?"*
+- *"Create a meeting with Sarah tomorrow at 3 PM for 1 hour"*
+- *"Find all events with 'standup' in the next 2 weeks"*
 
-| Prompt | What happens |
-|--------|-------------|
-| *"What are my last 5 emails?"* | Fetches the 5 most recent emails with sender, subject, date, and body preview |
-| *"Show me unread emails"* | Uses query `is:unread` to filter |
-| *"Read emails from GitHub"* | Uses query `from:github.com` |
+### Sheets
+- *"Read data from spreadsheet ABC123, range Sheet1!A1:D10"*
+- *"Append a new row with name John, age 30 to my sheet"*
+- *"Create a new spreadsheet called 'Project Tracker'"*
 
-### Sending Emails
+### Supabase
+- *"Query the users table where status is active"*
+- *"Insert a new task: title 'Fix login bug', priority 'high'"*
+- *"How many messages are in the conversations table?"*
 
-| Prompt | What happens |
-|--------|-------------|
-| *"Send an email to john@example.com about our meeting tomorrow"* | Composes and sends with AI-generated subject and body |
-| *"Email sarah@company.com — subject: Invoice, body: Please find attached."* | Sends exactly as specified |
+### MongoDB
+- *"List all collections in the database"*
+- *"Find documents in 'orders' where amount is greater than 1000"*
+- *"Count how many users signed up this month"*
 
-### Searching Emails
+### S3
+- *"List all my S3 buckets"*
+- *"Upload this text as 'notes/meeting.txt' to my-bucket"*
+- *"Generate a download link for report.pdf that expires in 1 hour"*
 
-Uses standard **Gmail search syntax** — same queries you'd type in Gmail's search bar:
+### Azure Blob
+- *"List all containers in my storage account"*
+- *"Upload this content as 'data/export.csv'"*
+- *"Generate a temporary link for the backup file"*
 
-| Query Syntax | Meaning |
-|-------------|---------|
-| `from:boss@example.com` | Emails from a specific sender |
-| `subject:meeting` | Emails with "meeting" in the subject |
-| `is:unread` | All unread emails |
-| `is:unread in:inbox` | Unread emails in inbox only |
-| `after:2026/01/01` | Emails after a specific date |
-| `has:attachment` | Emails with attachments |
-| `from:amazon.com subject:order` | Combined filters |
-
-### Managing Emails
-
-| Prompt | What happens |
-|--------|-------------|
-| *"Mark all newsletter emails as read"* | Finds unread newsletter emails and removes the UNREAD label |
-| *"Mark emails from noreply@medium.com as read"* | Marks all matching unread emails as seen |
+### Social Media
+- *"How many subscribers does my YouTube channel have?"*
+- *"Show me my latest 5 YouTube videos with view counts"*
+- *"What are my recent Instagram posts and their engagement?"*
+- *"Post 'Exciting update coming soon!' to my Facebook page"*
 
 ---
 
 ## Troubleshooting
 
-### "MCP EmailAutomation: Server disconnected" (Claude Desktop)
+### "MCP Server disconnected" (Claude Desktop)
 
-**Cause:** The server isn't using stdio transport, or the config is wrong.
-
-**Fix:**
-1. In `email_mcp.py`, verify the last line is:
-   ```python
-   mcp.run(transport="stdio")
-   ```
-2. In `claude_desktop_config.json`, the config should NOT use `-m mcp run`. It should directly run the script:
-   ```json
-   "command": "/path/to/venv/bin/python",
-   "args": ["/path/to/email_mcp.py"]
-   ```
+1. Verify `email_mcp.py` (or any server) has `mcp.run(transport="stdio")` at the bottom
+2. Config should NOT use `-m mcp run` — run the script directly
 3. Restart Claude Desktop completely (Cmd+Q → Reopen)
 
-### "Authentication token missing or invalid"
+### "Authentication token missing or invalid" (Google services)
 
-**Cause:** `token.json` doesn't exist or is corrupted.
-
-**Fix:**
 ```bash
-cd "path/to/Gen AI 2.O/MCP"
+cd <server-folder>
 source venv/bin/activate
 python authenticate.py
 ```
 
-### "Failed to refresh token"
+### "Failed to refresh token" (Google services)
 
-**Cause:** The refresh token has expired or been revoked.
-
-**Fix:**
 ```bash
 rm token.json
 python authenticate.py
 ```
 
-### Cursor MCP shows as errored
+### Cursor MCP shows error
 
-**Fix:**
-1. Verify paths in `~/.cursor/mcp.json` are **absolute** paths
-2. Ensure the venv Python and `email_mcp.py` paths match your actual file locations
-3. Reload: Cmd+Shift+P → **Reload Window**
+1. Check that all paths in `~/.cursor/mcp.json` are **absolute**
+2. Cmd+Shift+P → **Reload Window**
 
-### Gmail API errors (quota, disabled, etc.)
+### "Google hasn't verified this app" during OAuth
 
-**Fix:**
-1. Go to [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services** → **Dashboard**
-2. Verify **Gmail API** is enabled
-3. Check **OAuth consent screen** → your email is listed as a test user
-4. If app is in "Testing" mode, only test users can authenticate
+This is normal for personal OAuth apps. Click **Advanced → Go to [App Name] (unsafe)**. Safe because you own both the app and the account.
 
-### "Google hasn't verified this app" warning during auth
+### Supabase: "Could not find function"
 
-**This is normal.** Since you created the OAuth client yourself, Google shows this warning. Click **Advanced** → **Go to [App Name] (unsafe)** to proceed. This is safe because you are the owner of both the app and the Gmail account.
+The `list_tables` and `run_sql` tools require RPC functions in Supabase. See `Gen AI 2.O/MCP/supabase/README.md` for the SQL to create them. Other tools (query, insert, update, delete) work out of the box.
+
+### MongoDB: Connection timeout
+
+- Ensure your IP is whitelisted in MongoDB Atlas (Network Access → Add IP)
+- Verify the connection string has the correct password
+
+### S3/Azure: Permission denied
+
+- AWS: Ensure the IAM user has `AmazonS3FullAccess` or equivalent policy
+- Azure: Ensure the storage account access key is correct and not rotated
 
 ---
 
@@ -433,60 +617,57 @@ python authenticate.py
 ```
 Gen AI 2.O/MCP/
 │
-├── email_mcp.py          # MCP server — 4 tools, runs with stdio transport
-├── authenticate.py       # One-time OAuth flow — creates token.json
-├── requirements.txt      # Python dependencies
-├── README.md             # Quick reference (points here)
-├── .gitignore            # Keeps secrets out of Git
+├── email_mcp.py              # Gmail — 4 tools
+├── authenticate.py           # Gmail OAuth
+├── requirements.txt
 │
-├── credentials.json      # YOUR Google Cloud OAuth client (do NOT commit)
-├── token.json            # Generated by authenticate.py (do NOT commit)
-└── venv/                 # Python virtual environment (do NOT commit)
+├── calendar/                 # Google Calendar — 5 tools
+│   ├── calendar_mcp.py
+│   ├── authenticate.py
+│   └── requirements.txt
+│
+├── sheets/                   # Google Sheets — 5 tools
+│   ├── sheets_mcp.py
+│   ├── authenticate.py
+│   └── requirements.txt
+│
+├── supabase/                 # Supabase (Postgres) — 6 tools
+│   ├── supabase_mcp.py
+│   └── requirements.txt
+│
+├── mongodb/                  # MongoDB — 7 tools
+│   ├── mongodb_mcp.py
+│   └── requirements.txt
+│
+├── s3/                       # AWS S3 — 6 tools
+│   ├── s3_mcp.py
+│   └── requirements.txt
+│
+├── azure-blob/               # Azure Blob Storage — 7 tools
+│   ├── azure_blob_mcp.py
+│   └── requirements.txt
+│
+└── social-media/             # YouTube + Instagram + Facebook — 10 tools
+    ├── social_mcp.py
+    ├── authenticate.py
+    └── requirements.txt
 ```
 
-### What each file does
+### What NOT to commit
 
-| File | Purpose | Commit to Git? |
-|------|---------|---------------|
-| `email_mcp.py` | The MCP server with all 4 email tools | Yes |
-| `authenticate.py` | Runs the Google OAuth browser flow once | Yes |
-| `requirements.txt` | Lists Python package dependencies | Yes |
-| `README.md` | Quick summary with link to this guide | Yes |
-| `.gitignore` | Prevents committing secrets | Yes |
-| `credentials.json` | Your Google Cloud OAuth secret | **No** |
-| `token.json` | Your personal auth session token | **No** |
-| `venv/` | Isolated Python environment | **No** |
+| File | Why |
+|------|-----|
+| `credentials.json` | Your Google Cloud OAuth secret |
+| `token.json` | Your personal auth session |
+| `venv/` | Virtual environment (recreate with `pip install -r requirements.txt`) |
+| `.env` | Environment variables with API keys |
 
----
-
-## Quick Reference — Config Snippets
-
-Copy-paste these into your config files. Replace the paths with your actual absolute paths.
-
-### Claude Desktop (`claude_desktop_config.json`)
-
-```json
-"EmailAutomation": {
-  "command": "/YOUR/PATH/TO/venv/bin/python",
-  "args": ["/YOUR/PATH/TO/email_mcp.py"]
-}
-```
-
-### Cursor (`~/.cursor/mcp.json`)
-
-```json
-"EmailAutomation": {
-  "command": "/YOUR/PATH/TO/venv/bin/python",
-  "args": ["/YOUR/PATH/TO/email_mcp.py"]
-}
-```
+All `.gitignore` files are pre-configured to handle this.
 
 ---
 
 ## About
 
-Built as part of the **Euron AI Automation Bootcamp** — demonstrating how to build production-ready MCP servers that connect AI assistants to real-world services using functional Python.
+Built as part of the **Euron AI Automation Bootcamp** by [AI with Dhruv](https://youtube.com/@aiwithdhruv) — demonstrating how to build production-ready MCP servers that connect AI assistants to real-world services using functional Python and FastMCP.
 
 **Repository:** [github.com/aiagentwithdhruv/Euron](https://github.com/aiagentwithdhruv/Euron)
-
-*For the in-folder quick reference, see [`Gen AI 2.O/MCP/README.md`](Gen%20AI%202.O/MCP/README.md).*
