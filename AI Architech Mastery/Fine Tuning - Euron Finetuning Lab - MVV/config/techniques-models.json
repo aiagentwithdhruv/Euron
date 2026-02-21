@@ -1,0 +1,13 @@
+{
+  "lab": "Euron Finetuning Lab - MVV",
+  "techniques": {
+    "lora": {
+      "name": "Low-Rank Adaptation",
+      "models": ["llama", "mistral", "falcon"]
+    },
+    "qlora": {
+      "name": "Quantized Low-Rank Adaptation",
+      "models": ["llama-2", "mistral-7b", "qwen"]
+    }
+  }
+}

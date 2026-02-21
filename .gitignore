@@ -1,7 +1,8 @@
-# Mail MCP — keep secrets and venv out of version control
-Gen AI 2.O/MCP/credentials.json
-Gen AI 2.O/MCP/token.json
-Gen AI 2.O/MCP/venv/
+# MCP Servers — keep secrets and venvs out of version control
+**/credentials.json
+**/token.json
+**/venv/
+**/.env
 
 # Python
 __pycache__/

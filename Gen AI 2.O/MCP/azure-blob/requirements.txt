@@ -1,0 +1,2 @@
+mcp[cli]
+azure-storage-blob
