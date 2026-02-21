@@ -1,161 +1,251 @@
-# Mail MCP Setup — Complete Guide
+# Mail MCP — Build Your Own Email Automation with AI
 
-A step-by-step guide to set up the **Email Automation MCP** (Model Context Protocol) server so you can read, send, search, and manage Gmail directly from **Claude Desktop** and **Cursor** — no need to open your inbox.
-
----
-
-## Table of Contents
-
-1. [Overview](#1-overview)
-2. [What You Get](#2-what-you-get)
-3. [Prerequisites](#3-prerequisites)
-4. [Step 1: Google Cloud Credentials](#4-step-1-google-cloud-credentials)
-5. [Step 2: Local Project Setup](#5-step-2-local-project-setup)
-6. [Step 3: One-Time Authentication](#6-step-3-one-time-authentication)
-7. [Step 4: Claude Desktop Setup](#7-step-4-claude-desktop-setup)
-8. [Step 5: Cursor Setup](#8-step-5-cursor-setup)
-9. [Using the Tools](#9-using-the-tools)
-10. [Troubleshooting](#10-troubleshooting)
-11. [Project Structure](#11-project-structure)
+> **Control your Gmail entirely from Claude Desktop or Cursor.**
+> Read, send, search, and manage emails — all from chat. Zero inbox visits.
 
 ---
 
-## 1. Overview
+## What is This?
 
-This MCP server uses:
+This project is a **Model Context Protocol (MCP)** server written in Python that connects your Gmail account to AI tools like **Claude Desktop** and **Cursor IDE**.
 
-- **Python** and the **FastMCP** library
-- **Gmail API** via **Google Cloud OAuth 2.0** (no app passwords)
-- **Functional style** (no classes); all logic in plain functions
+Once configured, you can literally type:
+- *"Show me my last 5 emails"*
+- *"Send an email to john@example.com about the meeting"*
+- *"Find all unread emails from GitHub"*
+- *"Mark all newsletter emails as read"*
 
-Once set up, Claude or Cursor can manage your Gmail from chat: read recent mail, send messages, search, and mark as read.
+...and the AI does it for you instantly.
 
----
+### How It Works (Architecture)
 
-## 2. What You Get
+```
+You (Chat)
+   |
+   v
+Claude Desktop / Cursor
+   |
+   v  (MCP Protocol over stdio)
+Email MCP Server (Python + FastMCP)
+   |
+   v  (OAuth 2.0)
+Gmail API (Google Cloud)
+   |
+   v
+Your Gmail Inbox
+```
 
-| Tool | Description |
-|------|-------------|
-| **Read recent emails** | Fetch the latest N emails, optionally filtered by Gmail query |
-| **Send email** | Compose and send an email to any address |
-| **Search emails** | Search using Gmail syntax (`from:`, `subject:`, `is:unread`, etc.) |
-| **Mark as read** | Mark messages matching a query as read (remove UNREAD label) |
+### Tech Stack
 
----
-
-## 3. Prerequisites
-
-- **Python 3.9+** installed
-- A **Google account** (Gmail)
-- **Claude Desktop** and/or **Cursor** installed
-- Terminal (or Cursor integrated terminal) access
-
----
-
-## 4. Step 1: Google Cloud Credentials
-
-You need an OAuth 2.0 **Desktop** client so the MCP can access Gmail on your behalf.
-
-### 4.1 Create or select a project
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/).
-2. Create a **new project** or select an existing one.
-
-### 4.2 Enable Gmail API
-
-1. Open **APIs & Services** → **Library**.
-2. Search for **Gmail API**.
-3. Open it and click **Enable**.
-
-### 4.3 Create OAuth client ID
-
-1. Go to **APIs & Services** → **Credentials**.
-2. Click **Create Credentials** → **OAuth client ID**.
-3. If asked, configure the **OAuth consent screen** (External, add your email as test user).
-4. Application type: **Desktop app**.
-5. Name it (e.g. `Mail MCP`) and click **Create**.
-6. Click **Download JSON** (or copy Client ID and Client Secret).
-
-### 4.4 Add credentials to the project
-
-1. Clone or copy the **Mail MCP** folder (e.g. `Gen AI 2.O/MCP`) to your machine.
-2. Rename the downloaded JSON file to **`credentials.json`**.
-3. Place `credentials.json` **inside the MCP folder** (same directory as `email_mcp.py`).
-
-> **Security:** Do **not** commit `credentials.json` or `token.json` to Git. Add them to `.gitignore` (see [Project Structure](#11-project-structure)).
+| Layer | Technology |
+|-------|-----------|
+| AI Client | Claude Desktop / Cursor IDE |
+| Protocol | MCP (Model Context Protocol) via stdio |
+| Server | Python + FastMCP library |
+| Email API | Gmail API (Google Cloud) |
+| Auth | OAuth 2.0 Desktop Client (no app passwords!) |
+| Style | Functional programming (no classes) |
 
 ---
 
-## 5. Step 2: Local Project Setup
+## Available Tools
 
-All commands below assume you are inside the MCP folder (e.g. `Gen AI 2.O/MCP`).
+| # | Tool Name | What It Does | Parameters |
+|---|-----------|-------------|------------|
+| 1 | `send_email` | Send an email to anyone | `to_email`, `subject`, `body` |
+| 2 | `read_recent_emails` | Fetch latest N emails | `limit` (default: 5), `query` (optional) |
+| 3 | `search_emails` | Search with Gmail syntax | `query`, `limit` (default: 5) |
+| 4 | `mark_email_seen` | Mark matching emails as read | `query` |
 
-### 5.1 Create a virtual environment
+---
+
+## Prerequisites
+
+Before you start, make sure you have:
+
+- [ ] **Python 3.9+** installed ([Download](https://www.python.org/downloads/))
+- [ ] A **Gmail account**
+- [ ] **Claude Desktop** ([Download](https://claude.ai/download)) and/or **Cursor IDE** ([Download](https://cursor.com))
+- [ ] Access to [Google Cloud Console](https://console.cloud.google.com/)
+- [ ] A terminal / command line
+
+---
+
+## Step-by-Step Setup
+
+### Step 1 of 5 — Google Cloud Credentials
+
+You need to create an OAuth 2.0 client so the MCP server can access Gmail securely on your behalf. This is a one-time setup.
+
+#### 1A. Create a Google Cloud Project
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Click the project dropdown (top-left) → **New Project**
+3. Name it something like `Mail MCP` → **Create**
+4. Make sure your new project is selected in the dropdown
+
+#### 1B. Enable the Gmail API
+
+1. In the left sidebar: **APIs & Services** → **Library**
+2. Search for **Gmail API**
+3. Click on it → **Enable**
+
+#### 1C. Configure OAuth Consent Screen
+
+1. Go to **APIs & Services** → **OAuth consent screen**
+2. Choose **External** → **Create**
+3. Fill in:
+   - App name: `Mail MCP`
+   - User support email: *your email*
+   - Developer contact email: *your email*
+4. Click **Save and Continue** through the remaining steps
+5. Under **Test users**, click **Add Users** → add your Gmail address
+6. **Save and Continue** → **Back to Dashboard**
+
+#### 1D. Create OAuth Client ID
+
+1. Go to **APIs & Services** → **Credentials**
+2. Click **+ Create Credentials** → **OAuth client ID**
+3. Application type: **Desktop app**
+4. Name: `Mail MCP` (or anything)
+5. Click **Create**
+6. A dialog shows your **Client ID** and **Client Secret** — copy both or click **Download JSON**
+
+#### 1E. Save Credentials
+
+**Option A — Downloaded JSON file:**
+- Rename the file to `credentials.json`
+- Place it inside the MCP project folder (same directory as `email_mcp.py`)
+
+**Option B — Manual (if you copied Client ID and Secret):**
+- Create a file called `credentials.json` in the MCP folder with this structure:
+
+```json
+{
+  "installed": {
+    "client_id": "YOUR_CLIENT_ID_HERE",
+    "project_id": "your-project-id",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_secret": "YOUR_CLIENT_SECRET_HERE",
+    "redirect_uris": ["http://localhost"]
+  }
+}
+```
+
+> **Security Warning:** Never commit `credentials.json` or `token.json` to Git. The included `.gitignore` already handles this.
+
+---
+
+### Step 2 of 5 — Project Setup (Python Environment)
+
+Open a terminal and navigate to the MCP folder.
+
+#### 2A. Clone the repo (if you haven't)
 
 ```bash
-cd "Gen AI 2.O/MCP"   # or your actual path
+git clone https://github.com/aiagentwithdhruv/Euron.git
+cd "Euron/Gen AI 2.O/MCP"
+```
+
+#### 2B. Create a virtual environment
+
+```bash
 python3 -m venv venv
 ```
 
-### 5.2 Activate the virtual environment
+#### 2C. Activate the virtual environment
 
-- **macOS/Linux:** `source venv/bin/activate`
-- **Windows:** `venv\Scripts\activate`
+| OS | Command |
+|----|---------|
+| macOS / Linux | `source venv/bin/activate` |
+| Windows (CMD) | `venv\Scripts\activate` |
+| Windows (PowerShell) | `venv\Scripts\Activate.ps1` |
 
-### 5.3 Install dependencies
+You should see `(venv)` in your terminal prompt after activation.
+
+#### 2D. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Required packages (already in `requirements.txt`):
+This installs:
 
-- `mcp[cli]` — MCP server and CLI
-- `google-api-python-client` — Gmail API client
-- `google-auth-httplib2` — Auth for HTTP
-- `google-auth-oauthlib` — OAuth 2.0 flow
+| Package | Purpose |
+|---------|---------|
+| `mcp[cli]` | FastMCP server framework and CLI tools |
+| `google-api-python-client` | Official Google API client for Gmail |
+| `google-auth-httplib2` | HTTP transport for Google Auth |
+| `google-auth-oauthlib` | OAuth 2.0 browser-based login flow |
 
 ---
 
-## 6. Step 3: One-Time Authentication
+### Step 3 of 5 — One-Time Authentication
 
-The first time (and when the token expires), you must log in in the browser. After that, the server uses `token.json` and refreshes it automatically.
+Before the MCP server can run in the background, you need to authorize it once through your browser. After this, it stores a `token.json` that auto-refreshes.
 
-### 6.1 Run the auth script
+#### 3A. Run the authentication script
 
-From the MCP folder, with `venv` activated:
+Make sure venv is activated, then:
 
 ```bash
 python authenticate.py
 ```
 
-### 6.2 Complete the browser flow
+#### 3B. Complete the browser login
 
-1. A browser window opens with the Google sign-in page.
-2. Choose the **Gmail account** you want the MCP to use.
-3. If you see “Google hasn’t verified this app”, click **Advanced** → **Go to … (unsafe)**.
-4. Grant access to **view and manage your email**.
-5. When you see “The authentication flow has completed”, you can close the tab.
+1. A browser window opens automatically with Google Sign-In
+2. Select the **Gmail account** you want the MCP to manage
+3. You may see a warning: *"Google hasn't verified this app"*
+   - Click **Advanced** → **Go to Mail MCP (unsafe)**
+   - This is normal for personal OAuth apps
+4. Click **Allow** to grant Gmail access
+5. You'll see: *"The authentication flow has completed. You may close this window."*
 
-### 6.3 Verify
+#### 3C. Verify it worked
 
-- A file **`token.json`** should appear in the MCP folder.
-- The script prints a success message. The MCP server will use this token and refresh it when needed.
+Check that `token.json` now exists in your MCP folder:
+
+```bash
+ls token.json
+```
+
+You should also see in your terminal:
+
+```
+Authentication successful!
+token.json has been generated or refreshed.
+```
+
+#### 3D. Quick test (optional)
+
+Verify the connection to Gmail works:
+
+```bash
+python -c "
+from email_mcp import get_gmail_service
+service = get_gmail_service()
+results = service.users().messages().list(userId='me', maxResults=1).execute()
+print(f'Connection OK! Found {len(results.get(\"messages\", []))} message(s).')
+"
+```
 
 ---
 
-## 7. Step 4: Claude Desktop Setup
+### Step 4 of 5 — Claude Desktop Configuration
 
-Claude Desktop talks to the MCP over **stdio**. The server must run with `transport="stdio"` (this is already set in `email_mcp.py`).
+#### 4A. Locate the config file
 
-### 7.1 Locate the config file
+| OS | Path |
+|----|------|
+| macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
 
-- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+#### 4B. Add the EmailAutomation MCP server
 
-### 7.2 Add the EmailAutomation server
-
-Open `claude_desktop_config.json` and add an entry under `mcpServers`. Use **absolute paths** for your machine.
+Open the config file in any editor and add the `EmailAutomation` entry under `mcpServers`.
 
 **macOS example:**
 
@@ -163,182 +253,240 @@ Open `claude_desktop_config.json` and add an entry under `mcpServers`. Use **abs
 {
   "mcpServers": {
     "EmailAutomation": {
-      "command": "/full/path/to/Gen AI 2.O/MCP/venv/bin/python",
+      "command": "/ABSOLUTE/PATH/TO/Euron/Gen AI 2.O/MCP/venv/bin/python",
       "args": [
-        "/full/path/to/Gen AI 2.O/MCP/email_mcp.py"
+        "/ABSOLUTE/PATH/TO/Euron/Gen AI 2.O/MCP/email_mcp.py"
       ]
     }
   }
 }
 ```
 
-**Windows example** (adjust paths):
+**Windows example:**
 
 ```json
 {
   "mcpServers": {
     "EmailAutomation": {
-      "command": "C:\\path\\to\\Gen AI 2.O\\MCP\\venv\\Scripts\\python.exe",
+      "command": "C:\\Users\\YOU\\Euron\\Gen AI 2.O\\MCP\\venv\\Scripts\\python.exe",
       "args": [
-        "C:\\path\\to\\Gen AI 2.O\\MCP\\email_mcp.py"
+        "C:\\Users\\YOU\\Euron\\Gen AI 2.O\\MCP\\email_mcp.py"
       ]
     }
   }
 }
 ```
 
-- **command:** Python interpreter inside the project’s `venv`.
-- **args:** Single argument: full path to `email_mcp.py`.
-- No `env` needed; credentials come from `credentials.json` and `token.json` in the MCP folder.
+> **Key points:**
+> - `command` = the Python binary **inside the venv** (not your system Python)
+> - `args` = single item: the **absolute path** to `email_mcp.py`
+> - No `env` block needed — credentials are read from `credentials.json` and `token.json` in the same folder
+> - No `-m mcp run` — the script handles stdio transport directly
 
-### 7.3 Restart Claude Desktop
+#### 4C. Restart Claude Desktop
 
-Quit the app completely (e.g. Cmd+Q on macOS), then reopen it. The “MCP EmailAutomation: Server disconnected” error should go away once the server starts correctly with stdio.
+- **macOS:** Cmd+Q → Reopen
+- **Windows:** Close completely from system tray → Reopen
+
+The MCP should now show as connected. If you see errors, check [Troubleshooting](#troubleshooting).
 
 ---
 
-## 8. Step 5: Cursor Setup
+### Step 5 of 5 — Cursor IDE Configuration
 
-### 8.1 Locate the MCP config
+#### 5A. Locate the config file
 
-- **macOS/Linux:** `~/.cursor/mcp.json`
-- **Windows:** `%USERPROFILE%\.cursor\mcp.json`
+| OS | Path |
+|----|------|
+| macOS / Linux | `~/.cursor/mcp.json` |
+| Windows | `%USERPROFILE%\.cursor\mcp.json` |
 
-### 8.2 Add the EmailAutomation server
+#### 5B. Add the EmailAutomation MCP server
 
-Same structure as Claude Desktop: `command` = venv Python, `args` = path to `email_mcp.py`.
-
-**Example (macOS):**
+Same structure as Claude Desktop:
 
 ```json
 {
   "mcpServers": {
     "EmailAutomation": {
-      "command": "/full/path/to/Gen AI 2.O/MCP/venv/bin/python",
+      "command": "/ABSOLUTE/PATH/TO/Euron/Gen AI 2.O/MCP/venv/bin/python",
       "args": [
-        "/full/path/to/Gen AI 2.O/MCP/email_mcp.py"
+        "/ABSOLUTE/PATH/TO/Euron/Gen AI 2.O/MCP/email_mcp.py"
       ]
     }
   }
 }
 ```
 
-### 8.3 Reload Cursor
+#### 5C. Reload Cursor
 
-- **Cmd+Shift+P** (or Ctrl+Shift+P) → **“Reload Window”** → Enter.
-
-Then check **Cursor Settings → MCP**; EmailAutomation should show as connected.
-
----
-
-## 9. Using the Tools
-
-Once the MCP is connected in Claude or Cursor, you can say things like:
-
-- *“What are my last 5 emails?”*
-- *“Read my last 4 emails.”*
-- *“Send an email to john@example.com with subject ‘Hello’ and body ‘Hi from MCP.’”*
-- *“Search for unread emails from support@company.com.”*
-- *“Mark all unread emails from newsletters as read.”*
-
-Search uses **Gmail query syntax**, e.g.:
-
-- `from:someone@example.com`
-- `subject:meeting`
-- `is:unread`
-- `after:2026/01/01`
+- Press **Cmd+Shift+P** (macOS) or **Ctrl+Shift+P** (Windows/Linux)
+- Type **Reload Window** → Enter
+- Go to **Cursor Settings → MCP** to verify EmailAutomation shows green
 
 ---
 
-## 10. Troubleshooting
+## Usage Examples
 
-### “MCP EmailAutomation: Server disconnected” (Claude Desktop)
+Once the MCP is connected, just chat naturally:
 
-- The server must use **stdio** transport. In `email_mcp.py`, the main block should be:
-  ```python
-  if __name__ == "__main__":
-      mcp.run(transport="stdio")
-  ```
-- Config must run the script **directly** with the venv Python, e.g.:
-  - `"command": "/path/to/venv/bin/python"`
-  - `"args": ["/path/to/email_mcp.py"]`
-- No `-m mcp run` in `args` when using stdio from Claude.
+### Reading Emails
 
-### “Authentication token missing or invalid”
+| Prompt | What happens |
+|--------|-------------|
+| *"What are my last 5 emails?"* | Fetches the 5 most recent emails with sender, subject, date, and body preview |
+| *"Show me unread emails"* | Uses query `is:unread` to filter |
+| *"Read emails from GitHub"* | Uses query `from:github.com` |
 
-- Run `python authenticate.py` again from the MCP folder (with venv activated).
-- Ensure `credentials.json` is in the same folder as `email_mcp.py` and `authenticate.py`.
+### Sending Emails
 
-### “Failed to refresh token”
+| Prompt | What happens |
+|--------|-------------|
+| *"Send an email to john@example.com about our meeting tomorrow"* | Composes and sends with AI-generated subject and body |
+| *"Email sarah@company.com — subject: Invoice, body: Please find attached."* | Sends exactly as specified |
 
-- Delete `token.json` and run `python authenticate.py` again to re-authorize.
+### Searching Emails
 
-### Cursor: MCP shows as errored
+Uses standard **Gmail search syntax** — same queries you'd type in Gmail's search bar:
 
-- Confirm paths in `~/.cursor/mcp.json` are absolute and point to the same venv and `email_mcp.py`.
-- Reload the window (Cmd+Shift+P → Reload Window).
+| Query Syntax | Meaning |
+|-------------|---------|
+| `from:boss@example.com` | Emails from a specific sender |
+| `subject:meeting` | Emails with "meeting" in the subject |
+| `is:unread` | All unread emails |
+| `is:unread in:inbox` | Unread emails in inbox only |
+| `after:2026/01/01` | Emails after a specific date |
+| `has:attachment` | Emails with attachments |
+| `from:amazon.com subject:order` | Combined filters |
 
-### Gmail API errors (e.g. quota, disabled)
+### Managing Emails
 
-- In Google Cloud Console, ensure **Gmail API** is enabled for the project.
-- Check that the OAuth consent screen is configured and your user is added as a test user if the app is in “Testing”.
+| Prompt | What happens |
+|--------|-------------|
+| *"Mark all newsletter emails as read"* | Finds unread newsletter emails and removes the UNREAD label |
+| *"Mark emails from noreply@medium.com as read"* | Marks all matching unread emails as seen |
 
 ---
 
-## 11. Project Structure
+## Troubleshooting
+
+### "MCP EmailAutomation: Server disconnected" (Claude Desktop)
+
+**Cause:** The server isn't using stdio transport, or the config is wrong.
+
+**Fix:**
+1. In `email_mcp.py`, verify the last line is:
+   ```python
+   mcp.run(transport="stdio")
+   ```
+2. In `claude_desktop_config.json`, the config should NOT use `-m mcp run`. It should directly run the script:
+   ```json
+   "command": "/path/to/venv/bin/python",
+   "args": ["/path/to/email_mcp.py"]
+   ```
+3. Restart Claude Desktop completely (Cmd+Q → Reopen)
+
+### "Authentication token missing or invalid"
+
+**Cause:** `token.json` doesn't exist or is corrupted.
+
+**Fix:**
+```bash
+cd "path/to/Gen AI 2.O/MCP"
+source venv/bin/activate
+python authenticate.py
+```
+
+### "Failed to refresh token"
+
+**Cause:** The refresh token has expired or been revoked.
+
+**Fix:**
+```bash
+rm token.json
+python authenticate.py
+```
+
+### Cursor MCP shows as errored
+
+**Fix:**
+1. Verify paths in `~/.cursor/mcp.json` are **absolute** paths
+2. Ensure the venv Python and `email_mcp.py` paths match your actual file locations
+3. Reload: Cmd+Shift+P → **Reload Window**
+
+### Gmail API errors (quota, disabled, etc.)
+
+**Fix:**
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services** → **Dashboard**
+2. Verify **Gmail API** is enabled
+3. Check **OAuth consent screen** → your email is listed as a test user
+4. If app is in "Testing" mode, only test users can authenticate
+
+### "Google hasn't verified this app" warning during auth
+
+**This is normal.** Since you created the OAuth client yourself, Google shows this warning. Click **Advanced** → **Go to [App Name] (unsafe)** to proceed. This is safe because you are the owner of both the app and the Gmail account.
+
+---
+
+## Project Structure
 
 ```
 Gen AI 2.O/MCP/
-├── email_mcp.py        # MCP server (run with transport="stdio")
-├── authenticate.py     # One-time OAuth flow → creates token.json
-├── credentials.json    # From Google Cloud (do not commit)
-├── token.json          # From authenticate.py (do not commit)
-├── requirements.txt   # Python dependencies
-├── README.md           # Short reference in the folder
-└── venv/               # Virtual environment (do not commit)
+│
+├── email_mcp.py          # MCP server — 4 tools, runs with stdio transport
+├── authenticate.py       # One-time OAuth flow — creates token.json
+├── requirements.txt      # Python dependencies
+├── README.md             # Quick reference (points here)
+├── .gitignore            # Keeps secrets out of Git
+│
+├── credentials.json      # YOUR Google Cloud OAuth client (do NOT commit)
+├── token.json            # Generated by authenticate.py (do NOT commit)
+└── venv/                 # Python virtual environment (do NOT commit)
 ```
 
-### Suggested .gitignore (repo or MCP folder)
+### What each file does
 
-```gitignore
-# Mail MCP — keep secrets and venv out of Git
-Gen AI 2.O/MCP/credentials.json
-Gen AI 2.O/MCP/token.json
-Gen AI 2.O/MCP/venv/
+| File | Purpose | Commit to Git? |
+|------|---------|---------------|
+| `email_mcp.py` | The MCP server with all 4 email tools | Yes |
+| `authenticate.py` | Runs the Google OAuth browser flow once | Yes |
+| `requirements.txt` | Lists Python package dependencies | Yes |
+| `README.md` | Quick summary with link to this guide | Yes |
+| `.gitignore` | Prevents committing secrets | Yes |
+| `credentials.json` | Your Google Cloud OAuth secret | **No** |
+| `token.json` | Your personal auth session token | **No** |
+| `venv/` | Isolated Python environment | **No** |
+
+---
+
+## Quick Reference — Config Snippets
+
+Copy-paste these into your config files. Replace the paths with your actual absolute paths.
+
+### Claude Desktop (`claude_desktop_config.json`)
+
+```json
+"EmailAutomation": {
+  "command": "/YOUR/PATH/TO/venv/bin/python",
+  "args": ["/YOUR/PATH/TO/email_mcp.py"]
+}
 ```
 
-Or inside `Gen AI 2.O/MCP/.gitignore`:
+### Cursor (`~/.cursor/mcp.json`)
 
-```gitignore
-credentials.json
-token.json
-venv/
+```json
+"EmailAutomation": {
+  "command": "/YOUR/PATH/TO/venv/bin/python",
+  "args": ["/YOUR/PATH/TO/email_mcp.py"]
+}
 ```
 
 ---
 
-## Quick Reference: Config Snippets
+## About
 
-**Claude Desktop** (`claude_desktop_config.json`):
+Built as part of the **Euron AI Automation Bootcamp** — demonstrating how to build production-ready MCP servers that connect AI assistants to real-world services using functional Python.
 
-```json
-"EmailAutomation": {
-  "command": "/ABSOLUTE/PATH/TO/venv/bin/python",
-  "args": ["/ABSOLUTE/PATH/TO/email_mcp.py"]
-}
-```
+**Repository:** [github.com/aiagentwithdhruv/Euron](https://github.com/aiagentwithdhruv/Euron)
 
-**Cursor** (`~/.cursor/mcp.json`):
-
-```json
-"EmailAutomation": {
-  "command": "/ABSOLUTE/PATH/TO/venv/bin/python",
-  "args": ["/ABSOLUTE/PATH/TO/email_mcp.py"]
-}
-```
-
-Replace `/ABSOLUTE/PATH/TO/` with your actual path to the MCP folder (e.g. `.../Euron/Gen AI 2.O/MCP/`).
-
----
-
-*This guide is part of the Euron project. For the in-folder summary, see `Gen AI 2.O/MCP/README.md`.*
+*For the in-folder quick reference, see [`Gen AI 2.O/MCP/README.md`](Gen%20AI%202.O/MCP/README.md).*
