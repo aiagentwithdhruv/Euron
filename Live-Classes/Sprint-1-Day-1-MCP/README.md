@@ -623,11 +623,11 @@ Then I confirmed:
 
 > *"yes zoho crm"*
 
-**Result:** Claude built `zoho_crm_mcp.py` — a complete Zoho CRM MCP server with OAuth2 authentication, 7 tools (query leads, count leads, get pipeline, get sales, search by phone). I pasted the OAuth callback URL:
+**Result:** Claude built `zoho_crm_mcp.py` — a complete Zoho CRM MCP server with OAuth2 authentication, 7 tools (query leads, count leads, get pipeline, get sales, search by phone). I pasted the OAuth callback URL after authorizing in Zoho:
 
-> *"https://onsiteteams.com/callback?code=1000.9021c837266f9e2fbe92ef6befd4de1d..."*
+> *"https://yourapp.com/callback?code=1000.abc123def456..."*
 
-Claude exchanged the code for tokens, saved them, and the server was live. Then:
+Claude exchanged the code for tokens, saved them to `.env`, and the server was live. Then:
 
 > *"now how this access will be helpful and can you connect and setyp on claude desktop too same"*
 
@@ -643,13 +643,13 @@ Then:
 
 > *"this is good idea. Can you research it? Is this good idea to connect with Claude or is there any other method? Also there that we can connect?"*
 
-**Result:** Claude researched the Meta Marketing API, found no existing MCP server for Facebook Ads, and built `onsite_ads_mcp.py` from scratch — 11 tools including campaign performance, daily/monthly spend, lead forms, audience breakdown, and a dying campaigns alert. I just pasted the Ads Manager URL and access token:
+**Result:** Claude researched the Meta Marketing API, found no existing MCP server for Facebook Ads, and built `facebook_ads_mcp.py` from scratch — 11 tools including campaign performance, daily/monthly spend, lead forms, audience breakdown, and a dying campaigns alert. I just pasted the Ads Manager URL and access token:
 
-> *"https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=3176065209371338&business_id=326040748996267..."*
+> *"https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=YOUR_AD_ACCOUNT_ID&business_id=YOUR_BUSINESS_ID..."*
 
-> *"EAADX0ik8Vt0BQ0CNfNVz..."* (System User access token)
+> *"EAAXXX..."* (Your Facebook System User access token from Meta Business Manager)
 
-**Result:** Now I can ask "What's our cost per lead in India vs Middle East this month?" and get real numbers instantly. Built from scratch in one session.
+**Result:** Now I can ask "What's our cost per lead this month?" and get real numbers instantly. Built from scratch in one session.
 
 ### Prompt 6: Connect n8n via MCP (Feb 28)
 
