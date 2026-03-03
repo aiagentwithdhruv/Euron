@@ -335,9 +335,36 @@
 </div>
 
 <script>
-const BASE = "https://api.euron.one/api/v1/euri";
+const EURI_DIRECT = "https://api.euron.one/api/v1/euri";
+let useProxy = false;
 let totalTokensUsed = 0;
 let chatMessages = [];
+
+// ── CORS-safe fetch wrapper ──────────────────────────────────────
+// Euri's API doesn't handle OPTIONS preflight (returns 500),
+// so browser requests fail with "Failed to fetch". This wrapper
+// tries direct first, then falls back to our Vercel proxy (/api/proxy).
+async function euriFetch(endpoint, options) {
+  // If we already know direct fails, go straight to proxy
+  if (useProxy) {
+    return fetch("/api/proxy?endpoint=" + encodeURIComponent(endpoint), options);
+  }
+
+  // Try direct first (works from server-side or if CORS is fixed)
+  try {
+    const res = await fetch(EURI_DIRECT + endpoint, options);
+    return res;
+  } catch (e) {
+    // CORS blocked — try our own proxy
+    console.log("Direct fetch failed (CORS). Switching to proxy...");
+    useProxy = true;
+    try {
+      return await fetch("/api/proxy?endpoint=" + encodeURIComponent(endpoint), options);
+    } catch (proxyErr) {
+      throw new Error("API request failed. If running locally, deploy to Vercel first: cd euri-tester && vercel deploy");
+    }
+  }
+}
 
 // ── Tabs ──────────────────────────────────────────────────────────
 document.querySelectorAll(".tab").forEach(tab => {
@@ -416,7 +443,7 @@ chatSend.addEventListener("click", async () => {
 
   try {
     const start = Date.now();
-    const res = await fetch(BASE + "/chat/completions", {
+    const res = await euriFetch("/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
       body: JSON.stringify({ model, messages: chatMessages, temperature: temp, max_tokens: maxTokens })
@@ -482,7 +509,7 @@ imgBtn.addEventListener("click", async () => {
 
   try {
     const start = Date.now();
-    const res = await fetch(BASE + "/images/generations", {
+    const res = await euriFetch("/images/generations", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
       body: JSON.stringify({ model, prompt, n })
@@ -543,7 +570,7 @@ embedBtn.addEventListener("click", async () => {
 
   try {
     const start = Date.now();
-    const res = await fetch(BASE + "/embeddings", {
+    const res = await euriFetch("/embeddings", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
       body: JSON.stringify({ model, input })
@@ -601,7 +628,7 @@ sttBtn.addEventListener("click", async () => {
     formData.append("model", model);
     if (lang) formData.append("language", lang);
 
-    const res = await fetch(BASE + "/audio/transcriptions", {
+    const res = await euriFetch("/audio/transcriptions", {
       method: "POST",
       headers: { "Authorization": "Bearer " + key },
       body: formData
