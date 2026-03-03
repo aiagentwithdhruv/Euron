@@ -97,7 +97,7 @@
 
 <div class="header">
   <h1><span>euri</span> API Tester</h1>
-  <span class="badge">200K tokens/day FREE</span>
+  <span class="badge">100K tokens/day FREE</span>
 </div>
 
 <div class="api-bar">
@@ -113,6 +113,7 @@
   <div class="tab active" data-tab="chat">Chat</div>
   <div class="tab" data-tab="image">Image Generation</div>
   <div class="tab" data-tab="embed">Embeddings</div>
+  <div class="tab" data-tab="stt">Speech to Text</div>
 </div>
 
 <!-- ═══ CHAT TAB ═══ -->
@@ -124,33 +125,53 @@
         <div class="field">
           <label>Model</label>
           <select id="chatModel">
-            <optgroup label="Google">
-              <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Fast, Low cost)</option>
-              <option value="gemini-2.5-pro">Gemini 2.5 Pro (Smart, 2M context)</option>
-              <option value="gemini-2.0-flash">Gemini 2.0 Flash (Very fast)</option>
-              <option value="gemini-2.5-flash-lite-preview-06-17">Gemini 2.5 Flash Lite (Ultra-fast)</option>
+            <optgroup label="Google — Free">
+              <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro (2M context)</option>
+              <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
               <option value="gemini-2.5-pro-preview-06-05">Gemini 2.5 Pro Preview</option>
               <option value="gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash Preview</option>
+              <option value="gemini-2.5-flash-lite-preview-06-17">Gemini 2.5 Flash Lite Preview</option>
+              <option value="gemini-3-pro">Gemini 3 Pro</option>
             </optgroup>
-            <optgroup label="OpenAI">
-              <option value="gpt-5-nano-2025-08-07">GPT-5 Nano (Ultra-fast)</option>
-              <option value="gpt-5-mini-2025-08-07">GPT-5 Mini (Fast)</option>
-              <option value="gpt-4.1-nano">GPT-4.1 Nano (Ultra-fast)</option>
-              <option value="gpt-4.1-mini">GPT-4.1 Mini (Fast)</option>
+            <optgroup label="Google — Premium">
+              <option value="gemini-3-flash">Gemini 3 Flash ⭐</option>
+              <option value="gemini-3.1-pro">Gemini 3.1 Pro ⭐</option>
+            </optgroup>
+            <optgroup label="OpenAI — Free">
+              <option value="gpt-5-nano-2025-08-07">GPT-5 Nano</option>
+              <option value="gpt-5-mini-2025-08-07">GPT-5 Mini</option>
+              <option value="gpt-4.1-nano">GPT-4.1 Nano</option>
+              <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
               <option value="openai/gpt-oss-20b">GPT-OSS 20B</option>
-              <option value="openai/gpt-oss-120b">GPT-OSS 120B (Most powerful)</option>
+              <option value="openai/gpt-oss-120b">GPT-OSS 120B</option>
             </optgroup>
-            <optgroup label="Meta">
+            <optgroup label="OpenAI — Premium">
+              <option value="gpt-4.1">GPT-4.1 ⭐</option>
+              <option value="gpt-5">GPT-5 ⭐</option>
+              <option value="gpt-5.1">GPT-5.1 ⭐</option>
+              <option value="gpt-5-mini">GPT-5 Mini ⭐</option>
+              <option value="gpt-5-nano">GPT-5 Nano ⭐</option>
+              <option value="o3">OpenAI o3 ⭐</option>
+              <option value="o4-mini">OpenAI o4-mini ⭐</option>
+            </optgroup>
+            <optgroup label="Anthropic — Premium">
+              <option value="claude-sonnet-4">Claude Sonnet 4 ⭐</option>
+              <option value="claude-opus-4">Claude Opus 4 ⭐</option>
+              <option value="claude-sonnet-4-6">Claude Sonnet 4.6 ⭐</option>
+              <option value="claude-opus-4-6">Claude Opus 4.6 ⭐</option>
+            </optgroup>
+            <optgroup label="Meta — Free">
               <option value="llama-4-scout-17b-16e-instruct">Llama 4 Scout</option>
-              <option value="llama-4-maverick-17b-128e-instruct">Llama 4 Maverick</option>
               <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
               <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant</option>
+              <option value="llama-guard-4-12b">Llama Guard 4 12B</option>
             </optgroup>
-            <optgroup label="Groq">
+            <optgroup label="Groq — Free">
               <option value="groq/compound">Groq Compound (Web Search)</option>
-              <option value="groq/compound-mini">Groq Compound Mini (Web Search)</option>
+              <option value="groq/compound-mini">Groq Compound Mini</option>
             </optgroup>
-            <optgroup label="Alibaba">
+            <optgroup label="Alibaba — Free">
               <option value="qwen/qwen3-32b">Qwen 3 32B</option>
             </optgroup>
           </select>
@@ -280,6 +301,39 @@
   </div>
 </div>
 
+<!-- ═══ SPEECH TO TEXT TAB ═══ -->
+<div class="tab-content" id="tab-stt">
+  <div class="container">
+    <div class="panel">
+      <div class="panel-header"><span class="panel-icon">🎙️</span><h2>Speech to Text</h2></div>
+      <div class="panel-body">
+        <div class="field">
+          <label>Model</label>
+          <select id="sttModel">
+            <option value="whisper-large-v3">Whisper Large V3 ($0.111/hr) ⭐</option>
+            <option value="whisper-large-v3-turbo">Whisper Large V3 Turbo ($0.04/hr) ⭐</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Audio File</label>
+          <input type="file" id="sttFile" accept="audio/*,.mp3,.wav,.m4a,.flac,.ogg,.webm" style="background:#27272a;border:1px solid #3f3f46;padding:10px;border-radius:8px;" />
+        </div>
+        <div class="field">
+          <label>Language (optional, e.g. "en")</label>
+          <input type="text" id="sttLang" placeholder="Auto-detect if empty" />
+        </div>
+        <button class="btn btn-primary" id="sttTranscribe">Transcribe Audio</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-icon">📝</span><h2>Transcription</h2></div>
+      <div class="panel-body">
+        <div class="response-box empty" id="sttResponse" style="flex:1;">Transcription will appear here...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const BASE = "https://api.euron.one/api/v1/euri";
 let totalTokensUsed = 0;
@@ -305,8 +359,8 @@ function getKey() {
 function updateTokens(usage) {
   if (usage?.total_tokens) {
     totalTokensUsed += usage.total_tokens;
-    const remaining = Math.max(0, 200000 - totalTokensUsed);
-    const pct = ((totalTokensUsed / 200000) * 100).toFixed(1);
+    const remaining = Math.max(0, 100000 - totalTokensUsed);
+    const pct = ((totalTokensUsed / 100000) * 100).toFixed(1);
     const color = remaining < 20000 ? "#f87171" : remaining < 50000 ? "#fbbf24" : "#22c55e";
     document.getElementById("tokenInfo").innerHTML = `<span style="color:${color}">${remaining.toLocaleString()}</span> tokens remaining (${pct}% used)`;
   }
@@ -521,6 +575,51 @@ embedBtn.addEventListener("click", async () => {
     embedResponse.innerHTML = `<span class="error">Error: ${err.message}</span>`;
   }
   setLoading(embedBtn, false);
+});
+
+// ── Speech to Text ────────────────────────────────────────────────
+const sttBtn = document.getElementById("sttTranscribe");
+
+sttBtn.addEventListener("click", async () => {
+  const key = getKey(); if (!key) return;
+  const model = document.getElementById("sttModel").value;
+  const fileInput = document.getElementById("sttFile");
+  const lang = document.getElementById("sttLang").value.trim();
+
+  if (!fileInput.files.length) { alert("Select an audio file!"); return; }
+
+  const sttResponse = document.getElementById("sttResponse");
+  sttResponse.className = "response-box empty";
+  sttResponse.innerHTML = '<div class="spinner"></div> Transcribing...';
+
+  setLoading(sttBtn, true);
+
+  try {
+    const start = Date.now();
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+    formData.append("model", model);
+    if (lang) formData.append("language", lang);
+
+    const res = await fetch(BASE + "/audio/transcriptions", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + key },
+      body: formData
+    });
+    const elapsed = ((Date.now() - start) / 1000).toFixed(2);
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error?.message || data.detail || JSON.stringify(data));
+
+    sttResponse.className = "response-box";
+    sttResponse.innerHTML =
+      `<strong>Transcription:</strong>\n\n${escapeHtml(data.text || "")}\n` +
+      `<div class="meta">Model: ${model} | Time: ${elapsed}s | File: ${fileInput.files[0].name}</div>`;
+  } catch (err) {
+    sttResponse.className = "response-box";
+    sttResponse.innerHTML = `<span class="error">Error: ${err.message}</span>`;
+  }
+  setLoading(sttBtn, false);
 });
 
 // ── Utils ─────────────────────────────────────────────────────────

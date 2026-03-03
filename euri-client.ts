@@ -66,7 +66,7 @@ export interface EuriImageResponse {
 // ── Constants ───────────────────────────────────────────────────────
 
 const EURI_BASE_URL = "https://api.euron.one/api/v1/euri";
-const DAILY_TOKEN_LIMIT = 200_000;
+const DAILY_TOKEN_LIMIT = 100_000;
 
 // ── Client ──────────────────────────────────────────────────────────
 
