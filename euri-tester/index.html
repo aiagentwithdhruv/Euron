@@ -114,6 +114,7 @@
   <div class="tab" data-tab="image">Image Generation</div>
   <div class="tab" data-tab="embed">Embeddings</div>
   <div class="tab" data-tab="stt">Speech to Text</div>
+  <div class="tab" data-tab="tts">Text to Speech</div>
 </div>
 
 <!-- ═══ CHAT TAB ═══ -->
@@ -310,17 +311,25 @@
         <div class="field">
           <label>Model</label>
           <select id="sttModel">
+            <option value="sarvam-stt" selected>Sarvam Saaras V3 (Free)</option>
             <option value="whisper-large-v3">Whisper Large V3 ($0.111/hr) ⭐</option>
             <option value="whisper-large-v3-turbo">Whisper Large V3 Turbo ($0.04/hr) ⭐</option>
           </select>
         </div>
         <div class="field">
-          <label>Audio File</label>
+          <label>Audio File (wav, mp3, flac, ogg, m4a — max 25MB)</label>
           <input type="file" id="sttFile" accept="audio/*,.mp3,.wav,.m4a,.flac,.ogg,.webm" style="background:#27272a;border:1px solid #3f3f46;padding:10px;border-radius:8px;" />
         </div>
         <div class="field">
-          <label>Language (optional, e.g. "en")</label>
+          <label>Language Code (e.g. "en", "hi-IN")</label>
           <input type="text" id="sttLang" placeholder="Auto-detect if empty" />
+        </div>
+        <div class="field">
+          <label>Mode</label>
+          <select id="sttMode">
+            <option value="transcribe" selected>Transcribe</option>
+            <option value="translate">Translate to English</option>
+          </select>
         </div>
         <button class="btn btn-primary" id="sttTranscribe">Transcribe Audio</button>
       </div>
@@ -329,6 +338,80 @@
       <div class="panel-header"><span class="panel-icon">📝</span><h2>Transcription</h2></div>
       <div class="panel-body">
         <div class="response-box empty" id="sttResponse" style="flex:1;">Transcription will appear here...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TEXT TO SPEECH TAB ═══ -->
+<div class="tab-content" id="tab-tts">
+  <div class="container">
+    <div class="panel">
+      <div class="panel-header"><span class="panel-icon">🔊</span><h2>Text to Speech</h2></div>
+      <div class="panel-body">
+        <div class="field">
+          <label>Model</label>
+          <select id="ttsModel">
+            <option value="sarvam-tts" selected>Sarvam Bulbul V3 ⭐</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Text to Speak</label>
+          <textarea id="ttsInput" rows="4" placeholder="Enter text to convert to speech..."></textarea>
+        </div>
+        <div class="field">
+          <label>Speaker</label>
+          <select id="ttsSpeaker">
+            <option value="shubh" selected>Shubh</option>
+            <option value="advika">Advika</option>
+            <option value="arvind">Arvind</option>
+            <option value="kalpana">Kalpana</option>
+            <option value="mansi">Mansi</option>
+            <option value="neel">Neel</option>
+            <option value="vidya">Vidya</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Language</label>
+          <select id="ttsLang">
+            <option value="en-IN" selected>English (India)</option>
+            <option value="hi-IN">Hindi</option>
+            <option value="ta-IN">Tamil</option>
+            <option value="te-IN">Telugu</option>
+            <option value="kn-IN">Kannada</option>
+            <option value="ml-IN">Malayalam</option>
+            <option value="mr-IN">Marathi</option>
+            <option value="bn-IN">Bengali</option>
+            <option value="gu-IN">Gujarati</option>
+            <option value="pa-IN">Punjabi</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:16px;">
+          <div class="field" style="flex:1;">
+            <label>Sample Rate</label>
+            <select id="ttsSampleRate">
+              <option value="24000" selected>24000 Hz</option>
+              <option value="16000">16000 Hz</option>
+              <option value="8000">8000 Hz</option>
+            </select>
+          </div>
+          <div class="field" style="flex:1;">
+            <label>Pace</label>
+            <select id="ttsPace">
+              <option value="0.75">Slow (0.75x)</option>
+              <option value="1" selected>Normal (1x)</option>
+              <option value="1.25">Fast (1.25x)</option>
+              <option value="1.5">Faster (1.5x)</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="ttsSynthesize">Generate Speech</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-icon">🎵</span><h2>Audio Output</h2></div>
+      <div class="panel-body">
+        <div class="response-box empty" id="ttsResponse" style="flex:1;">Generated audio will appear here...</div>
       </div>
     </div>
   </div>
@@ -615,18 +698,28 @@ sttBtn.addEventListener("click", async () => {
 
   if (!fileInput.files.length) { alert("Select an audio file!"); return; }
 
+  const file = fileInput.files[0];
+  const fileSizeMB = (file.size / 1024 / 1024).toFixed(1);
+
+  // Vercel Edge proxy has ~4.5MB body limit
+  if (file.size > 4.5 * 1024 * 1024) {
+    alert(`File too large (${fileSizeMB}MB). Max ~4.5MB through the proxy. Try a shorter audio clip.`);
+    return;
+  }
+
   const sttResponse = document.getElementById("sttResponse");
   sttResponse.className = "response-box empty";
-  sttResponse.innerHTML = '<div class="spinner"></div> Transcribing...';
+  sttResponse.innerHTML = `<div class="spinner"></div> Transcribing ${fileSizeMB}MB file...`;
 
   setLoading(sttBtn, true);
 
   try {
     const start = Date.now();
     const formData = new FormData();
-    formData.append("file", fileInput.files[0]);
+    formData.append("file", file);
     formData.append("model", model);
-    if (lang) formData.append("language", lang);
+    if (lang) formData.append("language_code", lang);
+    formData.append("mode", document.getElementById("sttMode").value);
 
     const res = await euriFetch("/audio/transcriptions", {
       method: "POST",
@@ -634,19 +727,82 @@ sttBtn.addEventListener("click", async () => {
       body: formData
     });
     const elapsed = ((Date.now() - start) / 1000).toFixed(2);
-    const data = await res.json();
+
+    // Handle non-JSON responses (proxy errors, HTML error pages)
+    const contentType = res.headers.get("content-type") || "";
+    const rawText = await res.text();
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch (e) {
+      throw new Error(rawText.substring(0, 200) || `HTTP ${res.status} — non-JSON response`);
+    }
 
     if (!res.ok) throw new Error(data.error?.message || data.detail || JSON.stringify(data));
 
     sttResponse.className = "response-box";
     sttResponse.innerHTML =
       `<strong>Transcription:</strong>\n\n${escapeHtml(data.text || "")}\n` +
-      `<div class="meta">Model: ${model} | Time: ${elapsed}s | File: ${fileInput.files[0].name}</div>`;
+      `<div class="meta">Model: ${model} | Time: ${elapsed}s | File: ${file.name} (${fileSizeMB}MB)</div>`;
   } catch (err) {
     sttResponse.className = "response-box";
     sttResponse.innerHTML = `<span class="error">Error: ${err.message}</span>`;
   }
   setLoading(sttBtn, false);
+});
+
+// ── Text to Speech ────────────────────────────────────────────────
+const ttsBtn = document.getElementById("ttsSynthesize");
+
+ttsBtn.addEventListener("click", async () => {
+  const key = getKey(); if (!key) return;
+  const model = document.getElementById("ttsModel").value;
+  const input = document.getElementById("ttsInput").value.trim();
+  const speaker = document.getElementById("ttsSpeaker").value;
+  const lang = document.getElementById("ttsLang").value;
+  const sampleRate = parseInt(document.getElementById("ttsSampleRate").value);
+  const pace = parseFloat(document.getElementById("ttsPace").value);
+
+  if (!input) { alert("Enter some text to speak!"); return; }
+
+  const ttsResponse = document.getElementById("ttsResponse");
+  ttsResponse.className = "response-box empty";
+  ttsResponse.innerHTML = '<div class="spinner"></div> Generating speech...';
+
+  setLoading(ttsBtn, true);
+
+  try {
+    const start = Date.now();
+    const res = await euriFetch("/audio/speech", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + key
+      },
+      body: JSON.stringify({ model, input, speaker, target_language_code: lang, speech_sample_rate: sampleRate, pace })
+    });
+    const elapsed = ((Date.now() - start) / 1000).toFixed(2);
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error?.message || errData.detail || `HTTP ${res.status}`);
+    }
+
+    const blob = await res.blob();
+    const audioUrl = URL.createObjectURL(blob);
+
+    ttsResponse.className = "response-box";
+    ttsResponse.innerHTML =
+      `<audio controls autoplay style="width:100%;margin-bottom:12px;"><source src="${audioUrl}" type="audio/wav"></audio>` +
+      `<div style="display:flex;gap:8px;margin-bottom:8px;">` +
+      `<a href="${audioUrl}" download="euri-speech.wav" style="background:#a78bfa;color:#fff;padding:8px 16px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;">⬇ Download WAV</a>` +
+      `</div>` +
+      `<div class="meta">Model: ${model} | Speaker: ${speaker} | Language: ${lang} | Pace: ${pace}x | Time: ${elapsed}s</div>`;
+  } catch (err) {
+    ttsResponse.className = "response-box";
+    ttsResponse.innerHTML = `<span class="error">Error: ${err.message}</span>`;
+  }
+  setLoading(ttsBtn, false);
 });
 
 // ── Utils ─────────────────────────────────────────────────────────

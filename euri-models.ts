@@ -1,16 +1,17 @@
 /**
  * Euri API Model Definitions
  * All available models on https://euron.one/euri
- * Last updated: Mar 3, 2026
+ * Last updated: Mar 14, 2026
  *
- * 39 models · 7 providers · 24 free · 15 premium
+ * 50 models · 8 providers · 27 free · 23 premium
+ * 40 text + 4 embeddings + 1 image + 3 STT + 1 TTS + 1 text(sarvam)
  */
 
-export type EuriModelType = "text" | "embedding" | "image" | "speech-to-text";
+export type EuriModelType = "text" | "embedding" | "image" | "speech-to-text" | "text-to-speech";
 export type EuriTier = "free" | "premium";
 export type EuriSpeed = "ultra-fast" | "very-fast" | "fast" | "medium";
 export type EuriCost = "very-low" | "low" | "medium" | "high";
-export type EuriProvider = "alibaba" | "anthropic" | "google" | "groq" | "meta" | "openai" | "together";
+export type EuriProvider = "alibaba" | "anthropic" | "google" | "groq" | "meta" | "openai" | "sarvam" | "together";
 
 export interface EuriModel {
   id: string;
@@ -25,7 +26,7 @@ export interface EuriModel {
   capabilities: string[];
 }
 
-// ── Text Generation Models — Free (20) ─────────────────────────────
+// ── Text Generation Models — Free (21) ─────────────────────────────
 
 export const EURI_FREE_TEXT_MODELS: EuriModel[] = [
   // Alibaba
@@ -204,6 +205,20 @@ export const EURI_FREE_TEXT_MODELS: EuriModel[] = [
     capabilities: ["Content Moderation", "Safety Classification"],
   },
 
+  // Sarvam
+  {
+    id: "sarvam-m",
+    name: "Sarvam M",
+    provider: "sarvam",
+    type: "text",
+    tier: "free",
+    contextWindow: 128_000,
+    speed: "fast",
+    cost: "low",
+    pricing: { input: 0, output: 0 },
+    capabilities: ["Text Generation", "Multilingual", "Indian Languages", "Code Generation"],
+  },
+
   // OpenAI
   {
     id: "gpt-5-nano-2025-08-07",
@@ -279,7 +294,7 @@ export const EURI_FREE_TEXT_MODELS: EuriModel[] = [
   },
 ];
 
-// ── Text Generation Models — Premium (13) ──────────────────────────
+// ── Text Generation Models — Premium (20) ──────────────────────────
 
 export const EURI_PREMIUM_TEXT_MODELS: EuriModel[] = [
   // Anthropic
@@ -358,6 +373,58 @@ export const EURI_PREMIUM_TEXT_MODELS: EuriModel[] = [
     capabilities: ["Text Generation", "Code Generation", "Mathematical Reasoning"],
   },
 
+  // Anthropic (new)
+  {
+    id: "claude-sonnet-4-5",
+    name: "Claude Sonnet 4.5",
+    provider: "anthropic",
+    type: "text",
+    tier: "premium",
+    contextWindow: 200_000,
+    speed: "fast",
+    cost: "medium",
+    pricing: { input: 3.00, output: 15.00 },
+    capabilities: ["Text Generation", "Code Generation", "Complex Reasoning", "Computer Use"],
+  },
+  {
+    id: "claude-opus-4-5",
+    name: "Claude Opus 4.5",
+    provider: "anthropic",
+    type: "text",
+    tier: "premium",
+    contextWindow: 200_000,
+    speed: "medium",
+    cost: "high",
+    pricing: { input: 15.00, output: 75.00 },
+    capabilities: ["Text Generation", "Code Generation", "Complex Reasoning", "Autonomous Agents"],
+  },
+  {
+    id: "claude-haiku-4-5",
+    name: "Claude Haiku 4.5",
+    provider: "anthropic",
+    type: "text",
+    tier: "premium",
+    contextWindow: 200_000,
+    speed: "very-fast",
+    cost: "low",
+    pricing: { input: 0.80, output: 4.00 },
+    capabilities: ["Text Generation", "Code Generation", "Extended Thinking", "Computer Use"],
+  },
+
+  // Google (new)
+  {
+    id: "gemini-3.1-flash-lite",
+    name: "Gemini 3.1 Flash-Lite",
+    provider: "google",
+    type: "text",
+    tier: "premium",
+    contextWindow: 1_000_000,
+    speed: "ultra-fast",
+    cost: "very-low",
+    pricing: { input: 0.10, output: 0.40 },
+    capabilities: ["Text Generation", "High Throughput", "Low Latency"],
+  },
+
   // OpenAI
   {
     id: "gpt-4.1",
@@ -394,6 +461,42 @@ export const EURI_PREMIUM_TEXT_MODELS: EuriModel[] = [
     cost: "medium",
     pricing: { input: 2.00, output: 8.00 },
     capabilities: ["Text Generation", "Code Generation", "Complex Reasoning"],
+  },
+  {
+    id: "gpt-5.2",
+    name: "GPT-5.2",
+    provider: "openai",
+    type: "text",
+    tier: "premium",
+    contextWindow: 128_000,
+    speed: "fast",
+    cost: "medium",
+    pricing: { input: 2.00, output: 8.00 },
+    capabilities: ["Text Generation", "Code Generation", "Complex Reasoning"],
+  },
+  {
+    id: "gpt-5.3-instant",
+    name: "GPT-5.3 Instant",
+    provider: "openai",
+    type: "text",
+    tier: "premium",
+    contextWindow: 128_000,
+    speed: "very-fast",
+    cost: "medium",
+    pricing: { input: 2.00, output: 8.00 },
+    capabilities: ["Text Generation", "Web Search", "Conversational", "Low Hallucination"],
+  },
+  {
+    id: "gpt-5.4",
+    name: "GPT-5.4",
+    provider: "openai",
+    type: "text",
+    tier: "premium",
+    contextWindow: 128_000,
+    speed: "fast",
+    cost: "high",
+    pricing: { input: 5.00, output: 20.00 },
+    capabilities: ["Text Generation", "Code Generation", "Complex Reasoning", "Math", "Science"],
   },
   {
     id: "gpt-5-mini",
@@ -445,7 +548,7 @@ export const EURI_PREMIUM_TEXT_MODELS: EuriModel[] = [
   },
 ];
 
-// ── Embedding Models (3 — all free) ────────────────────────────────
+// ── Embedding Models (4 — all free) ────────────────────────────────
 
 export const EURI_EMBEDDING_MODELS: EuriModel[] = [
   {
@@ -459,6 +562,18 @@ export const EURI_EMBEDDING_MODELS: EuriModel[] = [
     cost: "very-low",
     pricing: { input: 0.15, output: 0 },
     capabilities: ["Semantic Search", "Text Classification", "Named Entity Recognition"],
+  },
+  {
+    id: "gemini-embedding-2-preview",
+    name: "Gemini Embedding 2 Preview",
+    provider: "google",
+    type: "embedding",
+    tier: "free",
+    contextWindow: 8_000,
+    speed: "very-fast",
+    cost: "very-low",
+    pricing: { input: 0.15, output: 0 },
+    capabilities: ["Semantic Search", "Multimodal Embedding", "Text", "Images", "Video", "Audio", "PDFs"],
   },
   {
     id: "text-embedding-3-small",
@@ -503,9 +618,20 @@ export const EURI_IMAGE_MODELS: EuriModel[] = [
   },
 ];
 
-// ── Speech to Text Models (2 — premium) ────────────────────────────
+// ── Speech to Text Models (3 — 1 free + 2 premium) ─────────────────
 
 export const EURI_STT_MODELS: EuriModel[] = [
+  {
+    id: "sarvam-stt",
+    name: "Sarvam Saaras V3",
+    provider: "sarvam",
+    type: "speech-to-text",
+    tier: "free",
+    contextWindow: 0,
+    speed: "fast",
+    cost: "very-low",
+    capabilities: ["Speech to Text", "Multilingual", "Hindi", "Indian Languages", "Timestamps"],
+  },
   {
     id: "whisper-large-v3",
     name: "Whisper Large V3",
@@ -532,6 +658,22 @@ export const EURI_STT_MODELS: EuriModel[] = [
   },
 ];
 
+// ── Text to Speech Models (1 — premium) ─────────────────────────────
+
+export const EURI_TTS_MODELS: EuriModel[] = [
+  {
+    id: "sarvam-tts",
+    name: "Sarvam Bulbul V3",
+    provider: "sarvam",
+    type: "text-to-speech",
+    tier: "premium",
+    contextWindow: 0,
+    speed: "fast",
+    cost: "very-low",
+    capabilities: ["Text to Speech", "Multilingual", "Hindi", "Indian Languages", "Multiple Speakers"],
+  },
+];
+
 // ── All Models ──────────────────────────────────────────────────────
 
 export const EURI_TEXT_MODELS: EuriModel[] = [
@@ -545,6 +687,7 @@ export const ALL_EURI_MODELS: EuriModel[] = [
   ...EURI_EMBEDDING_MODELS,
   ...EURI_IMAGE_MODELS,
   ...EURI_STT_MODELS,
+  ...EURI_TTS_MODELS,
 ];
 
 // ── Defaults ────────────────────────────────────────────────────────

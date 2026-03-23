@@ -13,3 +13,9 @@ __pycache__/
 .eggs/
 dist/
 build/
+
+# IDE / Build artifacts
+.cursor/
+.claude/worktrees/
+node_modules/
+.DS_Store

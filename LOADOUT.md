@@ -5,7 +5,7 @@ description: AI testing toolkit + Euri API gateway — 24 models, 6 providers, f
 author: AiwithDhruv
 license: MIT
 tier: free
-last_verified: 2026-02-23
+last_verified: 2026-03-07
 refresh_cadence: monthly
 dependencies: []
 platforms: [claude-code, cursor]

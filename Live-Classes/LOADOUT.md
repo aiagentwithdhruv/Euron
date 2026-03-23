@@ -99,7 +99,7 @@ Euron/Live-Classes/
 | Students-Doubts-Answers | `Euron/Students-Doubts-Answers/` | Student support templates |
 | Euron API (Euri) | `Euron/README.md` | API gateway for course projects |
 | MCP Servers | `Euron/Gen-AI-2.O/MCP/` | 8 MCP servers built for courses |
-| Skills Library | `.context/claude-skills/` | 26 skills that map to course content |
+| Skills Library | `.context/claude-skills/` | 40 skills that map to course content |
 
 ---
 

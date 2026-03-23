@@ -59,7 +59,7 @@ response = client.chat.completions.create(model="gemini-2.5-flash", messages=[{"
 | `euri-tester/` | **[Euri API Tester](https://aiagentwithdhruv.github.io/Euron/euri-tester/)** — chat, images, embeddings with free Euri API |
 | `HOW-WE-BUILT-THIS.md` | **[Case study](HOW-WE-BUILT-THIS.md)** — how we built this with AI in 3 hours |
 | `euri-client.ts` | TypeScript client for Next.js / Node.js projects |
-| `euri-models.ts` | All 24 model definitions with types and metadata |
+| `euri-models.ts` | All 50 model definitions with types and metadata |
 | `examples/` | Usage examples — TypeScript, Python, n8n, Next.js |
 
 ## API Reference
@@ -104,46 +104,87 @@ POST /images/generations
 | `model` | yes | string | e.g. `gemini-3-pro-image-preview` |
 | `n` | no | number | Number of images (default: 4) |
 
-## Available Models (24 models, 6 providers)
+## Available Models (50 models, 8 providers)
 
-### Text Generation (20 models)
+### Free Text Models (21)
 
-| Provider | Model | ID | Context | Speed | Cost |
-|----------|-------|----|---------|-------|------|
-| Alibaba | Qwen 3 32B | `qwen/qwen3-32b` | 128K | Fast | Medium |
-| Google | Gemini 2.0 Flash | `gemini-2.0-flash` | 1M | Very fast | Low |
-| Google | Gemini 2.5 Pro | `gemini-2.5-pro` | 2M | Fast | Medium |
-| Google | Gemini 2.5 Flash | `gemini-2.5-flash` | 1M | Very fast | Low |
-| Google | Gemini 2.5 Pro Preview | `gemini-2.5-pro-preview-06-05` | 2M | Fast | Medium |
-| Google | Gemini 2.5 Flash Preview | `gemini-2.5-flash-preview-05-20` | 1M | Very fast | Low |
-| Google | Gemini 2.5 Flash Lite | `gemini-2.5-flash-lite-preview-06-17` | 128K | Ultra-fast | Very low |
-| Groq | Groq Compound | `groq/compound` | 131K | Fast | Medium |
-| Groq | Groq Compound Mini | `groq/compound-mini` | 131K | Fast | Medium |
-| Meta | Llama 4 Scout | `llama-4-scout-17b-16e-instruct` | 128K | Fast | Medium |
-| Meta | Llama 4 Maverick | `llama-4-maverick-17b-128e-instruct` | 128K | Medium | Medium |
-| Meta | Llama 3.3 70B | `llama-3.3-70b-versatile` | 128K | Medium | High |
-| Meta | Llama 3.1 8B Instant | `llama-3.1-8b-instant` | 128K | Very fast | Low |
-| Meta | Llama Guard 4 12B | `llama-guard-4-12b` | 128K | Fast | Low |
-| OpenAI | GPT-5 Nano | `gpt-5-nano-2025-08-07` | 128K | Ultra-fast | Very low |
-| OpenAI | GPT-5 Mini | `gpt-5-mini-2025-08-07` | 128K | Fast | Low |
-| OpenAI | GPT-4.1 Nano | `gpt-4.1-nano` | 128K | Ultra-fast | Very low |
-| OpenAI | GPT-4.1 Mini | `gpt-4.1-mini` | 128K | Fast | Low |
-| OpenAI | GPT-OSS 20B | `openai/gpt-oss-20b` | 128K | Fast | Medium |
-| OpenAI | GPT-OSS 120B | `openai/gpt-oss-120b` | 128K | Medium | High |
+| Provider | Model | ID | Context | Speed |
+|----------|-------|----|---------|-------|
+| Alibaba | Qwen 3 32B | `qwen/qwen3-32b` | 128K | Fast |
+| Google | Gemini 2.0 Flash | `gemini-2.0-flash` | 1M | Very fast |
+| Google | Gemini 2.5 Pro | `gemini-2.5-pro` | 2M | Fast |
+| Google | Gemini 2.5 Flash | `gemini-2.5-flash` | 1M | Very fast |
+| Google | Gemini 2.5 Pro Preview | `gemini-2.5-pro-preview-06-05` | 2M | Fast |
+| Google | Gemini 2.5 Flash Preview | `gemini-2.5-flash-preview-05-20` | 1M | Very fast |
+| Google | Gemini 2.5 Flash Lite | `gemini-2.5-flash-lite-preview-06-17` | 128K | Ultra-fast |
+| Google | Gemini 3 Pro | `gemini-3-pro` | 1M | Fast |
+| Groq | Groq Compound | `groq/compound` | 131K | Fast |
+| Groq | Groq Compound Mini | `groq/compound-mini` | 131K | Fast |
+| Meta | Llama 4 Scout | `llama-4-scout-17b-16e-instruct` | 128K | Fast |
+| Meta | Llama 3.3 70B | `llama-3.3-70b-versatile` | 128K | Medium |
+| Meta | Llama 3.1 8B Instant | `llama-3.1-8b-instant` | 128K | Very fast |
+| Meta | Llama Guard 4 12B | `llama-guard-4-12b` | 128K | Fast |
+| OpenAI | GPT-5 Nano | `gpt-5-nano-2025-08-07` | 128K | Ultra-fast |
+| OpenAI | GPT-5 Mini | `gpt-5-mini-2025-08-07` | 128K | Fast |
+| OpenAI | GPT-4.1 Nano | `gpt-4.1-nano` | 128K | Ultra-fast |
+| OpenAI | GPT-4.1 Mini | `gpt-4.1-mini` | 128K | Fast |
+| OpenAI | GPT-OSS 20B | `openai/gpt-oss-20b` | 128K | Fast |
+| OpenAI | GPT-OSS 120B | `openai/gpt-oss-120b` | 128K | Medium |
+| Sarvam | Sarvam M | `sarvam-m` | 128K | Fast |
 
-### Embedding Models (3 models)
+### Premium Text Models (20)
 
-| Provider | Model | ID | Dimensions |
-|----------|-------|----|------------|
-| Google | Gemini Embedding 001 | `gemini-embedding-001` | 1536 |
-| OpenAI | Text Embedding 3 Small | `text-embedding-3-small` | 1536 |
-| Together | M2 BERT 80M 32K | `togethercomputer/m2-bert-80M-32k-retrieval` | 1536 |
+| Provider | Model | ID | Context | Speed |
+|----------|-------|----|---------|-------|
+| Anthropic | Claude Sonnet 4 | `claude-sonnet-4` | 200K | Fast |
+| Anthropic | Claude Opus 4 | `claude-opus-4` | 200K | Medium |
+| Anthropic | Claude Sonnet 4.6 | `claude-sonnet-4-6` | 200K | Fast |
+| Anthropic | Claude Opus 4.6 | `claude-opus-4-6` | 200K | Medium |
+| Anthropic | Claude Sonnet 4.5 | `claude-sonnet-4-5` | 200K | Fast |
+| Anthropic | Claude Opus 4.5 | `claude-opus-4-5` | 200K | Medium |
+| Anthropic | Claude Haiku 4.5 | `claude-haiku-4-5` | 200K | Very fast |
+| Google | Gemini 3 Flash | `gemini-3-flash` | 1M | Very fast |
+| Google | Gemini 3.1 Pro | `gemini-3.1-pro` | 2M | Fast |
+| Google | Gemini 3.1 Flash-Lite | `gemini-3.1-flash-lite` | 1M | Ultra-fast |
+| OpenAI | GPT-4.1 | `gpt-4.1` | 128K | Fast |
+| OpenAI | GPT-5 | `gpt-5` | 128K | Fast |
+| OpenAI | GPT-5.1 | `gpt-5.1` | 128K | Fast |
+| OpenAI | GPT-5.2 | `gpt-5.2` | 128K | Fast |
+| OpenAI | GPT-5.3 Instant | `gpt-5.3-instant` | 128K | Very fast |
+| OpenAI | GPT-5.4 | `gpt-5.4` | 128K | Fast |
+| OpenAI | GPT-5 Mini | `gpt-5-mini` | 128K | Fast |
+| OpenAI | GPT-5 Nano | `gpt-5-nano` | 128K | Ultra-fast |
+| OpenAI | o3 | `o3` | 200K | Medium |
+| OpenAI | o4-mini | `o4-mini` | 200K | Medium |
 
-### Image Generation (1 model)
+### Embedding Models (4)
+
+| Provider | Model | ID | Notes |
+|----------|-------|----|-------|
+| Google | Gemini Embedding 001 | `gemini-embedding-001` | Text only, 1536-dim |
+| Google | Gemini Embedding 2 | `gemini-embedding-2-preview` | Multimodal (text+image+video+audio+PDF), 3072-dim |
+| OpenAI | Text Embedding 3 Small | `text-embedding-3-small` | Text only, 1536-dim |
+| Together | M2 BERT 80M 32K | `togethercomputer/m2-bert-80M-32k-retrieval` | Text only |
+
+### Image Generation (1)
 
 | Provider | Model | ID |
 |----------|-------|----|
 | Google | Gemini 3 Pro Image Preview | `gemini-3-pro-image-preview` |
+
+### Speech-to-Text (3)
+
+| Provider | Model | ID | Tier |
+|----------|-------|----|------|
+| Sarvam | Sarvam Saaras V3 | `sarvam-stt` | Free |
+| OpenAI | Whisper Large V3 | `whisper-large-v3` | Premium |
+| OpenAI | Whisper Large V3 Turbo | `whisper-large-v3-turbo` | Premium |
+
+### Text-to-Speech (1)
+
+| Provider | Model | ID | Tier |
+|----------|-------|----|------|
+| Sarvam | Sarvam Bulbul V3 | `sarvam-tts` | Premium |
 
 ## Recommended Models
 
@@ -151,15 +192,35 @@ POST /images/generations
 |----------|-------|-----|
 | General purpose | `gemini-2.5-flash` | Best balance of speed + quality |
 | Complex reasoning | `gemini-2.5-pro` | 2M context, best reasoning |
-| Fast & cheap | `gpt-4.1-nano` or `gpt-5-nano-2025-08-07` | Cheapest tokens |
-| Code generation | `gpt-4.1-mini` or `gemini-2.5-flash` | Good at code |
+| Fast & cheap | `gpt-4.1-nano` | Cheapest tokens |
+| Frontier code | `claude-sonnet-4-5` | 77.2% SWE-bench |
+| Autonomous agents | `claude-opus-4-5` | 80.9% SWE-bench |
+| Fast Claude | `claude-haiku-4-5` | Sonnet 4 quality at Haiku price |
 | Web search | `groq/compound` | Built-in web search |
-| Embeddings (RAG) | `gemini-embedding-001` | Best quality embeddings |
+| Indian languages | `sarvam-m` | 11 Indian languages, 24B params |
+| Frontier OpenAI | `gpt-5.4` | Best reasoning across STEM |
+| Conversational | `gpt-5.3-instant` | 26.8% fewer hallucinations |
+| Embeddings (text) | `gemini-embedding-001` | Best quality |
+| Embeddings (multimodal) | `gemini-embedding-2-preview` | Text+image+video+audio+PDF |
 | Image generation | `gemini-3-pro-image-preview` | Only image model |
+| High throughput | `gemini-3.1-flash-lite` | Fastest, cheapest Google |
+
+## Supported AI Frameworks
+
+Euri works with all major AI frameworks via OpenAI SDK compatibility:
+
+| Framework | Use Case |
+|-----------|----------|
+| **LangChain** | LLM chains, agents, memory |
+| **LangGraph** | Stateful workflows, graph-based logic |
+| **CrewAI** | Multi-agent teams |
+| **AutoGen** | Conversational AI agents |
+| **LlamaIndex** | RAG, document Q&A |
+| **SmolAgents** | Lightweight tool-using agents |
 
 ## Token Limits
 
-- **Daily limit**: 200,000 tokens (input + output combined)
+- **Daily limit**: 100,000-200,000 tokens (input + output combined)
 - **Reset**: Midnight UTC
 - **Tip**: Use shorter prompts and lower max_tokens for efficiency
 

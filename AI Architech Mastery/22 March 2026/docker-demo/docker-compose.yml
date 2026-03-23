@@ -1,0 +1,77 @@
+# ============================================
+# DOCKER COMPOSE — Orchestrate 3 Containers
+# ============================================
+# This file tells Docker Compose to run:
+#   1. Python app (our code)
+#   2. PostgreSQL database
+#   3. Redis cache
+# All connected on the same network, talking by service name.
+
+services:
+
+  # ── Container 1: Python FastAPI App ──────────────────
+  app:
+    build: .                              # Build from Dockerfile in current dir
+    container_name: python-app
+    ports:
+      - "8000:8000"                       # host:container — access at localhost:8000
+    environment:                          # Env vars injected INTO the container
+      - DB_HOST=db                        # "db" = service name below (Docker DNS)
+      - DB_PORT=5432
+      - DB_USER=demo
+      - DB_PASS=demo123
+      - DB_NAME=demodb
+      - REDIS_HOST=redis                  # "redis" = service name below
+    depends_on:                           # Start order: db & redis first, then app
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - demo-network                      # All 3 on same network
+    restart: unless-stopped
+
+  # ── Container 2: PostgreSQL Database ─────────────────
+  db:
+    image: postgres:16-alpine             # Pre-built image from Docker Hub
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo123
+      POSTGRES_DB: demodb
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # Persist data even if container dies
+    ports:
+      - "5432:5432"                       # Optional: access DB from host tools
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U demo -d demodb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - demo-network
+    restart: unless-stopped
+
+  # ── Container 3: Redis Cache ─────────────────────────
+  redis:
+    image: redis:7-alpine                 # Pre-built image from Docker Hub
+    container_name: redis-cache
+    ports:
+      - "6379:6379"                       # Optional: access Redis from host tools
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - demo-network
+    restart: unless-stopped
+
+# ── Volumes: Persistent Storage ──────────────────────
+volumes:
+  pgdata:                                 # Named volume — survives container restarts
+
+# ── Networks: Communication Layer ────────────────────
+networks:
+  demo-network:
+    driver: bridge                        # Default network driver
